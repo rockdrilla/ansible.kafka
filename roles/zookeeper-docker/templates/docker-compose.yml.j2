@@ -20,6 +20,7 @@ services:
     volumes:
       - {{ app_workdir }}/data/zookeeper:/bitnami/zookeeper
       - {{ app_workdir }}/conf/zookeeper:/opt/bitnami/zookeeper/conf
+      - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro
   zookeeper-exporter:
     <<: *pod_defaults
     container_name: "{{ app_name }}-zk-exporter"
@@ -29,6 +30,8 @@ services:
     command:
       - "--listen=0.0.0.0:{{ zk_exporter_port }}"
       - "--zk-hosts={{ zk_hosts }}"
+    volumes:
+      - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro
 # zookeeper-jmx-exporter:
 #   <<: *pod_defaults
 #   container_name: "{{ app_name }}-zk-jmx-exporter"
@@ -40,3 +43,4 @@ services:
 #     - "/app/zk.yml"
 #   volumes:
 #     - {{ app_workdir }}/conf/zk-jmx-config.yml:/app/zk.yml
+#     - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro
