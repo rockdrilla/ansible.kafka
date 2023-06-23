@@ -1,0 +1,7 @@
+---
+
+docker_compose_version: v2.19.0
+docker_compose_uri_base: "https://github.com/docker/compose"
+docker_compose_uri_prefix: "{{ docker_compose_uri_base }}/releases/download/{{ docker_compose_version }}"
+docker_compose_binary: "/usr/local/bin/docker-compose"
+docker_compose_force_install: false

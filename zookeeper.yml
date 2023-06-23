@@ -1,0 +1,11 @@
+---
+
+- hosts: all
+  any_errors_fatal: true
+
+  vars:
+
+  roles:
+    - docker
+    - docker-compose
+    - zookeeper-docker

@@ -1,0 +1,8 @@
+---
+
+argument_specs:
+  main:
+    options:
+      app_name:
+        type: "str"
+        required: true

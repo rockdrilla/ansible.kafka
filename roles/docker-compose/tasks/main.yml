@@ -1,0 +1,68 @@
+---
+
+- name: "verify Docker Compose binary"
+  ignore_errors: true
+  changed_when: false
+  ansible.builtin.command:
+    argv:
+      - "{{ docker_compose_binary }}"
+      - "--version"
+  register: ctx_cmd
+
+- when: ctx_cmd.rc != 0
+  block:
+
+    - name: "generate intermediate fact: sysarches"
+      delegate_to: localhost
+      run_once: true
+      ansible.builtin.set_fact:
+        sysarches: "{% for item in ansible_play_batch %}{{ hostvars[item]['ansible_system'] | lower }}-{{ hostvars[item]['ansible_architecture'] | lower }},{% endfor %}"
+
+    - name: "finalize fact: sysarches"
+      delegate_to: localhost
+      run_once: true
+      ansible.builtin.set_fact:
+        sysarches: "{{ sysarches.split(',') | select() | unique }}"
+
+    - name: "verify Docker Compose URIs"
+      delegate_to: localhost
+      run_once: true
+      loop: "{{ sysarches }}"
+      ansible.builtin.uri:
+        url: "{{ docker_compose_uri_prefix }}/docker-compose-{{ item }}"
+        method: "HEAD"
+        return_content: true
+      register: ctx_uri
+      failed_when: (ctx_uri.status != 200) or ((ctx_uri.content_length | int) < 10000000)
+
+    - name: "download Docker Compose binaries to localhost"
+      delegate_to: localhost
+      run_once: true
+      loop: "{{ sysarches }}"
+      changed_when: false
+      ansible.builtin.get_url:
+        url: "{{ docker_compose_uri_prefix }}/docker-compose-{{ item }}"
+        dest: ./
+        mode: "0644"
+
+    - name: "remove existing Docker Compose binaries on remote hosts"
+      when: docker_compose_force_install | bool
+      ansible.builtin.file:
+        path: "{{ docker_compose_binary }}"
+        state: absent
+
+    - name: "copy Docker Compose binaries to remote hosts"
+      ansible.builtin.copy:
+        src: "./docker-compose-{{ ansible_system | lower }}-{{ ansible_architecture | lower }}"
+        dest: "{{ docker_compose_binary }}"
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: "verify Docker Compose binary"
+      ansible.builtin.command:
+        argv:
+          - "{{ docker_compose_binary }}"
+          - "--version"
+      register: ctx_cmd
+      failed_when: ctx_cmd.rc != 0

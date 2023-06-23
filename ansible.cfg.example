@@ -1,0 +1,8 @@
+[defaults]
+nocows=True
+local_tmp=/tmp/ansible
+remote_user=root
+private_key_file=/ansible/.ssh/id_ed25519
+
+[privilege_escalation]
+become=True

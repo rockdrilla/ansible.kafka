@@ -1,0 +1,71 @@
+---
+
+- ansible.builtin.import_tasks:
+    file: verify-config.yml
+
+- ansible.builtin.import_tasks:
+    file: gen-facts.yml
+
+- name: "create directory: appliance"
+  ansible.builtin.file:
+    path: "{{ app_workdir }}"
+    state: directory
+    mode: "0755"
+
+- name: "create directory: appliance configs"
+  ansible.builtin.file:
+    path: "{{ app_workdir }}/conf"
+    state: directory
+    mode: "0755"
+
+- name: "create directory: appliance data"
+  ansible.builtin.file:
+    path: "{{ app_workdir }}/data"
+    state: directory
+    mode: "0755"
+
+- name: "create directory: ZooKeeper configuration"
+  ansible.builtin.file:
+    path: "{{ app_workdir }}/conf/zookeeper"
+    state: directory
+    mode: "0750"
+    owner: "{{ app_uid }}"
+    group: "{{ app_gid }}"
+
+- name: "create directory: ZooKeeper persistence data"
+  ansible.builtin.file:
+    path: "{{ app_workdir }}/data/zookeeper"
+    state: directory
+    mode: "0750"
+    owner: "{{ app_uid }}"
+    group: "{{ app_gid }}"
+
+- name: "create Docker Compose file"
+  template:
+    src: templates/docker-compose.yml.j2
+    dest: "{{ app_workdir }}/docker-compose.yml"
+    mode: "0640"
+
+- name: "Docker Compose: prepare"
+  throttle: 2
+  async: 300
+  poll: 10
+  ansible.builtin.command:
+    chdir: "{{ app_workdir }}"
+    cmd: "{{ docker_compose_cmd_up }} --no-start"
+
+- name: "Docker: preseed ZooKeeper configuration"
+  ansible.builtin.command:
+    cmd: "docker run --rm --entrypoint='' -u 0:0 -v {{ app_workdir }}/conf/zookeeper:/out -w /opt/bitnami/zookeeper/conf {{ image_registry }}/{{ image_zookeeper }} sh -c 'cp -nt /out ./* ; exit 0'"
+
+- name: "adjust ownership: ZooKeeper configuration"
+  ansible.builtin.command:
+    cmd: "chown -R {{ app_uid }}:{{ app_gid }} {{ app_workdir }}/conf/zookeeper"
+
+- name: "Docker Compose: run one by one"
+  throttle: 1
+  async: 120
+  poll: 10
+  ansible.builtin.command:
+    chdir: "{{ app_workdir }}"
+    cmd: "{{ docker_compose_cmd_up }}"

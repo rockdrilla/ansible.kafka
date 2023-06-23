@@ -1,0 +1,34 @@
+---
+
+app_name:
+app_rootdir: "/data"
+app_workdir: "{{ app_rootdir }}/{{ app_name }}"
+app_uid: "10001"
+app_gid: "10001"
+
+docker_compose_binary: "/usr/local/bin/docker-compose"
+docker_compose_cmd_up: "{{ docker_compose_binary }} up -d"
+
+# "fqdn"      = use "ansible_fqdn" from host
+# "ipv4"      = use default/first IPv4 address from host
+# "inventory" = use "ansible_host" from inventory
+# "custom"    = use host attribute "host_addr" from inventory
+host_addr_type: "inventory"
+
+image_registry: docker.io
+image_jmx_exporter: bitnami/jmx-exporter:0.18.0-debian-11-r32
+image_zookeeper: bitnami/zookeeper:3.8.1-debian-11-r47
+image_zookeeper_exporter: dabealu/zookeeper-exporter:v0.1.13
+
+# TODO: observer support
+# MUST be set on per-host basis
+# zk_observer: false
+
+zk_client_port: 2181
+zk_tls_port: 3181
+zk_follower_port: 2888
+zk_election_port: 3888
+
+zk_jmx_port: 5557
+zk_jmx_exporter_port: 9002
+zk_exporter_port: 9091

@@ -1,0 +1,90 @@
+---
+
+- name: "verify Docker binary"
+  ignore_errors: true
+  changed_when: false
+  ansible.builtin.command: docker --version
+  register: ctx_cmd
+
+- when: ctx_cmd.rc != 0
+  block:
+
+    - name: "setup APT repository for Docker"
+      when: docker_external_apt_repo | bool
+      block:
+
+        - name: "download GPG keyrings to localhost: Debian"
+          delegate_to: localhost
+          run_once: true
+          changed_when: false
+          ansible.builtin.get_url:
+            url: "{{ docker_apt_key_debian }}"
+            dest: "./{{ docker_apt_key_file | basename }}-debian"
+            mode: "0644"
+
+        - name: "download GPG keyrings to localhost: Ubuntu"
+          delegate_to: localhost
+          run_once: true
+          changed_when: false
+          ansible.builtin.get_url:
+            url: "{{ docker_apt_key_ubuntu }}"
+            dest: "./{{ docker_apt_key_file | basename }}-ubuntu"
+            mode: "0644"
+
+        - name: "copy GPG keyring"
+          block:
+            - when: ansible_facts['ansible_distribution']|lower == 'debian'
+              ansible.builtin.copy:
+                src: "./{{ docker_apt_key_file | basename }}-debian"
+                dest: "{{ docker_apt_key_file }}"
+                owner: root
+                group: root
+                mode: "0644"
+            - when: ansible_facts['ansible_distribution']|lower == 'ubuntu'
+              ansible.builtin.copy:
+                src: "./{{ docker_apt_key_file | basename }}-debian"
+                dest: "{{ docker_apt_key_file }}"
+                owner: root
+                group: root
+                mode: "0644"
+
+        - name: "setup APT repository"
+          block:
+            - when: ansible_facts['ansible_distribution']|lower == 'debian'
+              ansible.builtin.lineinfile:
+                path: "{{ docker_apt_sources_file }}"
+                line: "deb {{ docker_apt_repo_debian }} {{ ansible_distribution_release }} stable"
+                create: yes
+                owner: root
+                group: root
+                mode: "0644"
+            - when: ansible_facts['ansible_distribution']|lower == 'ubuntu'
+              ansible.builtin.lineinfile:
+                path: "{{ docker_apt_sources_file }}"
+                line: "deb {{ docker_apt_repo_ubuntu }} {{ ansible_distribution_release }} stable"
+                create: yes
+                owner: root
+                group: root
+                mode: "0644"
+
+    - name: "install Docker"
+      block:
+
+        - when: not (docker_external_apt_repo | bool)
+          ansible.builtin.apt:
+            name: "{{ docker_packages_native }} {{docker_packages_extra}}"
+            update_cache: yes
+
+        - when: docker_external_apt_repo | bool
+          ansible.builtin.apt:
+            name: "{{ docker_packages_external }} {{docker_packages_extra}}"
+            update_cache: yes
+
+    - name: "cleanup APT state"
+      ansible.builtin.apt:
+        clean: yes
+
+    - name: "verify Docker binary"
+      ansible.builtin.command: docker --version
+      register: ctx_cmd
+      failed_when: ctx_cmd.rc != 0
