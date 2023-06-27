@@ -12,7 +12,7 @@
   run_once: True
   changed_when: false
   ansible.builtin.debug:
-    msg: "{{ playbook_dir }}/files/ca/"
+    msg: "{{ extra_ca_src_dir }}/"
 
 - name: "enumerate extra CA certificates on Ansible host"
   tags: [ install, configure ]
@@ -20,7 +20,7 @@
   run_once: True
   changed_when: false
   ansible.builtin.set_fact:
-    extra_ca_files: "{{ (playbook_dir + '/files/ca/*.crt') | fileglob }}"
+    extra_ca_files: "{{ extra_ca_src_mask | fileglob }}"
 
 - name: "copy extra CA certificates"
   tags: [ install, configure ]
@@ -28,7 +28,7 @@
   loop: "{{ extra_ca_files }}"
   ansible.builtin.copy:
     src: "{{ item }}"
-    dest: /usr/local/share/ca-certificates/
+    dest: "{{ extra_ca_dst_dir }}/"
     owner: root
     group: root
     mode: "0644"

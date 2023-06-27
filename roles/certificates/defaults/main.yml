@@ -1,0 +1,5 @@
+---
+
+extra_ca_src_dir: "{{ playbook_dir }}/files/ca"
+extra_ca_src_mask: "{{ extra_ca_src_dir }}/*.crt"
+extra_ca_dst_dir: "/usr/local/share/ca-certificates"
