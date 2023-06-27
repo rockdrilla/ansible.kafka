@@ -3,6 +3,8 @@
 - hosts: all
   any_errors_fatal: true
 
+  tags: [ install ]
+
   vars:
 
   roles:

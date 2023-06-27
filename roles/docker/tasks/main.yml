@@ -1,12 +1,14 @@
 ---
 
 - name: "verify Docker binary"
+  tags: [ install ]
   ignore_errors: true
   changed_when: false
   ansible.builtin.command: docker --version
   register: ctx_cmd
 
 - when: ctx_cmd.rc != 0
+  tags: [ install ]
   block:
 
     - name: "setup APT repository for Docker"
@@ -90,6 +92,7 @@
       failed_when: ctx_cmd.rc != 0
 
 - name: "configure Docker daemon"
+  tags: [ install, configure ]
   when: docker_daemon_config is mapping and docker_daemon_config
   block:
 

@@ -1,6 +1,7 @@
 ---
 
 - name: "verify Docker Compose binary"
+  tags: [ install ]
   ignore_errors: true
   changed_when: false
   ansible.builtin.command:
@@ -10,6 +11,7 @@
   register: ctx_cmd
 
 - when: ctx_cmd.rc != 0
+  tags: [ install ]
   block:
 
     - name: "generate intermediate fact: sysarches"
