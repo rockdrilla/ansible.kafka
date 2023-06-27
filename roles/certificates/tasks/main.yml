@@ -6,15 +6,7 @@
     name: "ca-certificates"
     update_cache: yes
 
-- name: "print extra CA certificates directory on Ansible host"
-  tags: [ install, configure ]
-  delegate_to: localhost
-  run_once: True
-  changed_when: false
-  ansible.builtin.debug:
-    msg: "{{ extra_ca_src_dir }}/"
-
-- name: "enumerate extra CA certificates on Ansible host"
+- name: "enumerate extra CA certificates on Ansible host at {{ extra_ca_src_dir }}/"
   tags: [ install, configure ]
   delegate_to: localhost
   run_once: True
