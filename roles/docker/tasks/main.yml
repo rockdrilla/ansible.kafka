@@ -88,3 +88,33 @@
       ansible.builtin.command: docker --version
       register: ctx_cmd
       failed_when: ctx_cmd.rc != 0
+
+- name: "configure Docker daemon"
+  when: docker_daemon_config is mapping and docker_daemon_config
+  block:
+
+    - name: "retrieve existing Docker daemon config"
+      ignore_errors: true
+      changed_when: false
+      ansible.builtin.slurp:
+        src: "{{ docker_daemon_config_path }}"
+      register: docker_daemon_config_existing
+
+    - name: "adjust Docker daemon config"
+      when: docker_daemon_config_existing.content is defined
+      changed_when: false
+      ansible.builtin.set_fact:
+        docker_daemon_config: "{{ docker_daemon_config_existing.content | b64decode | from_json | combine(docker_daemon_config) }}"
+
+    - name: "write new Docker daemon config"
+      ansible.builtin.copy:
+        content: "{{ docker_daemon_config | to_nice_json }}"
+        dest: "{{ docker_daemon_config_path }}"
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: "restart Docker daemon"
+      ansible.builtin.systemd:
+        state: restarted
+        name: docker
