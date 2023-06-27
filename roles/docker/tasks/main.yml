@@ -9,11 +9,6 @@
 - when: ctx_cmd.rc != 0
   block:
 
-    - name: "install ca-certificates"
-      ansible.builtin.apt:
-        name: "ca-certificates"
-        update_cache: yes
-
     - name: "setup APT repository for Docker"
       when: docker_external_apt_repo | bool
       block:

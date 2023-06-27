@@ -6,6 +6,7 @@
   vars:
 
   roles:
+    - certificates
     - docker
     - docker-compose
     - zookeeper-docker

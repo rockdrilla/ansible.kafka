@@ -1,0 +1,34 @@
+---
+
+- name: "install ca-certificates"
+  ansible.builtin.apt:
+    name: "ca-certificates"
+    update_cache: yes
+
+- name: "print extra CA certificates directory on Ansible host"
+  delegate_to: localhost
+  run_once: True
+  changed_when: false
+  ansible.builtin.debug:
+    msg: "{{ playbook_dir }}/files/ca/"
+
+- name: "enumerate extra CA certificates on Ansible host"
+  delegate_to: localhost
+  run_once: True
+  changed_when: false
+  ansible.builtin.set_fact:
+    extra_ca_files: "{{ (playbook_dir + '/files/ca/*.crt') | fileglob }}"
+
+- name: "copy extra CA certificates"
+  when: extra_ca_files is defined and extra_ca_files
+  loop: "{{ extra_ca_files }}"
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: /usr/local/share/ca-certificates/
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: "update CA certificates"
+  when: extra_ca_files is defined and extra_ca_files
+  ansible.builtin.command: "update-ca-certificates"
