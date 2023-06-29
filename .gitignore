@@ -1,5 +1,5 @@
-ansible.cfg
-hosts
-.ssh/
-.vscode/
-files/
+/ansible.cfg
+/hosts
+/.ssh/
+/.vscode/
+/files/
