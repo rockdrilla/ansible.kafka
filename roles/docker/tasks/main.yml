@@ -1,115 +1,192 @@
 ---
 
-- name: "verify Docker binary"
-  tags: [ install ]
-  ignore_errors: true
+- name: "Docker: verify binary"
+  tags: [ status ]
   changed_when: false
   ansible.builtin.command: docker --version
   register: ctx_cmd
+  failed_when: ctx_cmd.rc != 0
 
-- when: ctx_cmd.rc != 0
+- name: "APT: prepare files"
+  tags: [ install, update ]
+  when: docker_external_apt_repo | bool
+  block:
+
+    - name: "GPG keyring: download Debian's"
+      delegate_to: localhost
+      run_once: true
+      changed_when: false
+      ansible.builtin.get_url:
+        url: "{{ docker_apt_key_debian }}"
+        dest: "./{{ docker_apt_key_file | basename }}-debian"
+        mode: "0644"
+        force: true
+
+    - name: "GPG keyring: download Ubuntu's"
+      delegate_to: localhost
+      run_once: true
+      changed_when: false
+      ansible.builtin.get_url:
+        url: "{{ docker_apt_key_ubuntu }}"
+        dest: "./{{ docker_apt_key_file | basename }}-ubuntu"
+        mode: "0644"
+        force: true
+
+    - name: "fact: docker_apt_repo"
+      block:
+
+        - when: (ansible_facts['ansible_distribution'] | lower) == 'debian'
+          changed_when: false
+          ansible.builtin.set_fact:
+            docker_apt_repo: "{{ docker_apt_repo_debian }}"
+
+        - when: (ansible_facts['ansible_distribution'] | lower) == 'ubuntu'
+          changed_when: false
+          ansible.builtin.set_fact:
+            docker_apt_repo: "{{ docker_apt_repo_ubuntu }}"
+
+- name: "APT: enable external repository for Docker"
+  tags: [ install, update ]
+  when: docker_external_apt_repo | bool
+  block:
+
+    - name: "GPG keyring: copy"
+      ansible.builtin.copy:
+        src: "./{{ docker_apt_key_file | basename }}-{{ (ansible_facts['ansible_distribution'] | lower) }}"
+        dest: "{{ docker_apt_key_file }}"
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: "APT: setup repository"
+      ansible.builtin.copy:
+        content: "deb {{ docker_apt_repo }} {{ ansible_distribution_release }} stable"
+        dest: "{{ docker_apt_sources_file }}"
+        owner: root
+        group: root
+        mode: "0644"
+
+- name: "Ansible: remove temporary files"
+  tags: [ install, update ]
+  when: docker_external_apt_repo | bool
+  ignore_errors: true
+  delegate_to: localhost
+  run_once: true
+  changed_when: false
+  with_items:
+    - "debian"
+    - "ubuntu"
+  ansible.builtin.file:
+    path: "./{{ docker_apt_key_file | basename }}-{{ item }}"
+    state: absent
+
+- name: "APT: disable external repository for Docker"
+  tags: [ install, update ]
+  when: not (docker_external_apt_repo | bool)
+  ignore_errors: true
+  ansible.builtin.file:
+    path: "{{ docker_apt_sources_file }}"
+    state: absent
+
+- name: "APT: update package cache / verify config"
+  tags: [ install, update ]
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: "fact: docker_packages"
+  tags: [ install, update, status ]
+  ansible.builtin.set_fact:
+    docker_packages: "{% if (docker_external_apt_repo | bool) %}{{ docker_packages_external }}{% else %}{{ docker_packages_native }}{% endif %}"
+
+- name: "APT: verify Docker package(s)"
+  tags: [ status ]
+  # try to avoid changes in system
+  become_user: nobody
+  ansible.builtin.apt:
+    name: "{{ docker_packages }}"
+  vars:
+    ansible_remote_tmp: "/tmp"
+
+- name: "APT: install Docker package(s)"
   tags: [ install ]
+  ansible.builtin.apt:
+    name: "{{ docker_packages }}"
+
+- name: "APT: update Docker package(s)"
+  tags: [ update ]
+  ansible.builtin.apt:
+    name: "{{ docker_packages }}"
+    state: latest
+
+- name: "APT: install extra packages (if any)"
+  tags: [ install, update ]
+  when: docker_packages_extra | string
+  ansible.builtin.apt:
+    name: "{{ docker_packages_extra }}"
+
+- name: "APT: cleanup"
+  tags: [ install, update ]
+  ansible.builtin.apt:
+    clean: true
+
+- name: "Docker: verify binary"
+  tags: [ install, update ]
+  changed_when: false
+  ansible.builtin.command: docker --version
+  register: ctx_cmd
+  failed_when: ctx_cmd.rc != 0
+
+- name: "fact: docker_daemon_config_changed"
+  tags: [ install, update, status ]
+  changed_when: false
+  ansible.builtin.set_fact:
+    docker_daemon_config_changed: false
+
+- name: "Docker: configure daemon"
+  tags: [ install, update, status ]
+  when: (docker_daemon_config is mapping) and (docker_daemon_config)
   block:
 
-    - name: "setup APT repository for Docker"
-      when: docker_external_apt_repo | bool
-      block:
+    - name: "fact: docker_daemon_config_old"
+      changed_when: false
+      ansible.builtin.set_fact:
+        docker_daemon_config_old: {}
 
-        - name: "download GPG keyrings to localhost: Debian"
-          delegate_to: localhost
-          run_once: true
-          changed_when: false
-          ansible.builtin.get_url:
-            url: "{{ docker_apt_key_debian }}"
-            dest: "./{{ docker_apt_key_file | basename }}-debian"
-            mode: "0644"
-
-        - name: "download GPG keyrings to localhost: Ubuntu"
-          delegate_to: localhost
-          run_once: true
-          changed_when: false
-          ansible.builtin.get_url:
-            url: "{{ docker_apt_key_ubuntu }}"
-            dest: "./{{ docker_apt_key_file | basename }}-ubuntu"
-            mode: "0644"
-
-        - name: "copy GPG keyring"
-          block:
-            - when: ansible_facts['ansible_distribution']|lower == 'debian'
-              ansible.builtin.copy:
-                src: "./{{ docker_apt_key_file | basename }}-debian"
-                dest: "{{ docker_apt_key_file }}"
-                owner: root
-                group: root
-                mode: "0644"
-            - when: ansible_facts['ansible_distribution']|lower == 'ubuntu'
-              ansible.builtin.copy:
-                src: "./{{ docker_apt_key_file | basename }}-debian"
-                dest: "{{ docker_apt_key_file }}"
-                owner: root
-                group: root
-                mode: "0644"
-
-        - name: "setup APT repository"
-          block:
-            - when: ansible_facts['ansible_distribution']|lower == 'debian'
-              ansible.builtin.lineinfile:
-                path: "{{ docker_apt_sources_file }}"
-                line: "deb {{ docker_apt_repo_debian }} {{ ansible_distribution_release }} stable"
-                create: yes
-                owner: root
-                group: root
-                mode: "0644"
-            - when: ansible_facts['ansible_distribution']|lower == 'ubuntu'
-              ansible.builtin.lineinfile:
-                path: "{{ docker_apt_sources_file }}"
-                line: "deb {{ docker_apt_repo_ubuntu }} {{ ansible_distribution_release }} stable"
-                create: yes
-                owner: root
-                group: root
-                mode: "0644"
-
-    - name: "install Docker"
-      block:
-
-        - when: not (docker_external_apt_repo | bool)
-          ansible.builtin.apt:
-            name: "{{ docker_packages_native }} {{docker_packages_extra}}"
-            update_cache: yes
-
-        - when: docker_external_apt_repo | bool
-          ansible.builtin.apt:
-            name: "{{ docker_packages_external }} {{docker_packages_extra}}"
-            update_cache: yes
-
-    - name: "cleanup APT state"
-      ansible.builtin.apt:
-        clean: yes
-
-    - name: "verify Docker binary"
-      ansible.builtin.command: docker --version
-      register: ctx_cmd
-      failed_when: ctx_cmd.rc != 0
-
-- name: "configure Docker daemon"
-  tags: [ install, configure ]
-  when: docker_daemon_config is mapping and docker_daemon_config
-  block:
-
-    - name: "retrieve existing Docker daemon config"
+    - name: "Docker: retrieve existing config"
       ignore_errors: true
       changed_when: false
       ansible.builtin.slurp:
         src: "{{ docker_daemon_config_path }}"
-      register: docker_daemon_config_existing
+      register: ctx_docker_daemon_config
 
-    - name: "adjust Docker daemon config"
-      when: docker_daemon_config_existing.content is defined
+    - name: "Docker: process existing config"
+      when: ctx_docker_daemon_config.content is defined
       changed_when: false
       ansible.builtin.set_fact:
-        docker_daemon_config: "{{ docker_daemon_config_existing.content | b64decode | from_json | combine(docker_daemon_config) }}"
+        docker_daemon_config_old: "{{ ctx_docker_daemon_config.content | b64decode | from_json }}"
 
-    - name: "write new Docker daemon config"
+    - name: "Docker: adjust config"
+      changed_when: false
+      ansible.builtin.set_fact:
+        docker_daemon_config: "{{ docker_daemon_config_old | combine(docker_daemon_config) }}"
+
+    - name: "Docker: detect changes in config"
+      changed_when: false
+      ansible.builtin.set_fact:
+        docker_daemon_config_changed: "{{ (docker_daemon_config | to_json | string) != (docker_daemon_config_old | to_json | string) }}"
+
+- name: "Docker: verify configs"
+  tags: [ status ]
+  when: docker_daemon_config_changed | bool
+  ansible.builtin.fail:
+    msg: "Docker daemon config has pending changes"
+
+- name: "Docker: apply changes in config"
+  tags: [ install, update ]
+  when: docker_daemon_config_changed | bool
+  block:
+
+    - name: "Docker: write new config"
       ansible.builtin.copy:
         content: "{{ docker_daemon_config | to_nice_json }}"
         dest: "{{ docker_daemon_config_path }}"
@@ -117,7 +194,7 @@
         group: root
         mode: "0644"
 
-    - name: "restart Docker daemon"
+    - name: "systemd: restart Docker daemon"
       ansible.builtin.systemd:
         state: restarted
         name: docker
