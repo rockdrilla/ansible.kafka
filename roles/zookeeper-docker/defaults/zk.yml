@@ -1,0 +1,21 @@
+---
+
+image_jmx_exporter: "{{ image_registry_docker }}/bitnami/jmx-exporter:0.18.0-debian-11-r34"
+image_zookeeper: "{{ image_registry_docker }}/bitnami/zookeeper:3.8.1-debian-11-r49"
+image_zookeeper_exporter: "{{ image_registry_docker }}/dabealu/zookeeper-exporter:v0.1.13"
+
+# MUST be set on per-host basis
+zk_observer: false
+
+zk_use_ids: false
+
+zk_4lw_allowed: "srvr,mntr"
+
+zk_client_port: 2181
+zk_tls_port: 3181
+zk_follower_port: 2888
+zk_election_port: 3888
+
+zk_jmx_port: 5557
+zk_jmx_exporter_port: 9002
+zk_exporter_port: 9091

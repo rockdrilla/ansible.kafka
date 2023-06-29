@@ -1,0 +1,44 @@
+
+  zookeeper:
+    <<: *pod_defaults
+    container_name: "{{ app_name }}-zk"
+    image: "{{ image_zookeeper }}"
+    environment:
+      ZOO_SERVER_ID: "{{ zk_server_id }}"
+      ZOO_SERVERS: "{{ zk_servers }}"
+      ZOO_PORT_NUMBER: "{{ zk_client_port }}"
+    # ZOO_TLS_PORT_NUMBER: "{{ zk_tls_port }}"
+      ZOO_4LW_COMMANDS_WHITELIST: "{{ zk_4lw_allowed }}"
+      ALLOW_ANONYMOUS_LOGIN: yes
+{% if (zk_observer | bool) %}
+      ZOO_PEER_TYPE: "observer"
+{% endif %}
+    volumes:
+      - "/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro"
+      - "{{ app_workdir }}/data/zookeeper:/bitnami/zookeeper"
+      - "{{ app_workdir }}/conf/zookeeper:/opt/bitnami/zookeeper/conf"
+
+  zookeeper-exporter:
+    <<: *pod_defaults
+    container_name: "{{ app_name }}-zk-exporter"
+    image: "{{ image_zookeeper_exporter }}"
+    depends_on:
+      - zookeeper
+    command:
+      - "--listen=0.0.0.0:{{ zk_exporter_port }}"
+      - "--zk-hosts=127.0.0.1:{{ zk_client_port }}"
+    volumes:
+      - "/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro"
+
+# zookeeper-jmx-exporter:
+#   <<: *pod_defaults
+#   container_name: "{{ app_name }}-zk-jmx-exporter"
+#   image: "{{ image_jmx_exporter }}"
+#   depends_on:
+#     - zookeeper
+#   command:
+#     - "{{ zk_jmx_exporter_port }}"
+#     - "/app/zk.yml"
+#   volumes:
+#     - "/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro"
+#     - "{{ app_workdir }}/conf/zk-jmx-config.yml:/app/zk.yml"

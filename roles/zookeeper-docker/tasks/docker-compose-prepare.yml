@@ -1,0 +1,23 @@
+---
+
+- name: "tasks: app-common::docker-compose-prepare"
+  ansible.builtin.include_role:
+    name: app-common
+    tasks_from: docker-compose-prepare
+
+- name: "ZooKeeper: flush configuration"
+  tags: [ update ]
+  ignore_errors: true
+  ansible.builtin.command:
+    chdir: "{{ app_workdir }}/conf/zookeeper"
+    cmd: "find ./ -xdev -mindepth 1 -delete"
+
+- name: "ZooKeeper: refresh 'myid'"
+  tags: [ update ]
+  ignore_errors: true
+  ansible.builtin.copy:
+    content: "{{ zk_server_id }}"
+    dest: "{{ app_workdir }}/data/zookeeper/myid"
+    owner: "{{ app_uid }}"
+    group: "{{ app_gid }}"
+    mode: "0644"

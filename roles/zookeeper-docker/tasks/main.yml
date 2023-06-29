@@ -1,71 +1,71 @@
 ---
 
-- ansible.builtin.import_tasks:
-    file: verify-config.yml
+- tags: [ always ]
+  ansible.builtin.import_tasks:
+    file: generate-facts.yml
 
-- ansible.builtin.import_tasks:
-    file: gen-facts.yml
+- name: "tasks: app-common::prepare-local"
+  tags: [ install, update ]
+  ansible.builtin.include_role:
+    name: app-common
+    tasks_from: prepare-local
 
-- name: "create directory: appliance"
-  ansible.builtin.file:
-    path: "{{ app_workdir }}"
-    state: directory
-    mode: "0755"
+- name: "fact: preseed_src_zk"
+  tags: [ install, update ]
+  changed_when: false
+  delegate_to: localhost
+  run_once: true
+  ansible.builtin.set_fact:
+    preseed_src_zk: "{{ role_path }}/files"
 
-- name: "create directory: appliance configs"
-  ansible.builtin.file:
-    path: "{{ app_workdir }}/conf"
-    state: directory
-    mode: "0755"
+- name: "tasks: app-common::preseed-local"
+  tags: [ install, update ]
+  ansible.builtin.include_role:
+    name: app-common
+    tasks_from: preseed-local
+  vars:
+    preseed_src: "{{ preseed_src_zk }}"
 
-- name: "create directory: appliance data"
-  ansible.builtin.file:
-    path: "{{ app_workdir }}/data"
-    state: directory
-    mode: "0755"
+- name: "tasks: app-common::assemble-docker-compose"
+  tags: [ install, update ]
+  ansible.builtin.include_role:
+    name: app-common
+    tasks_from: assemble-docker-compose
 
-- name: "create directory: ZooKeeper configuration"
-  ansible.builtin.file:
-    path: "{{ app_workdir }}/conf/zookeeper"
-    state: directory
-    mode: "0750"
-    owner: "{{ app_uid }}"
-    group: "{{ app_gid }}"
+- tags: [ install, update ]
+  ansible.builtin.import_tasks:
+    file: prepare-remote.yml
 
-- name: "create directory: ZooKeeper persistence data"
-  ansible.builtin.file:
-    path: "{{ app_workdir }}/data/zookeeper"
-    state: directory
-    mode: "0750"
-    owner: "{{ app_uid }}"
-    group: "{{ app_gid }}"
+- tags: [ install, update ]
+  ansible.builtin.import_tasks:
+    file: docker-compose-prepare.yml
 
-- name: "create Docker Compose file"
-  template:
-    src: templates/docker-compose.yml.j2
-    dest: "{{ app_workdir }}/docker-compose.yml"
-    mode: "0640"
-
-- name: "Docker Compose: prepare"
-  throttle: 2
-  async: 300
-  poll: 10
+- name: "Docker: preseed default ZooKeeper configuration"
+  tags: [ install, update ]
   ansible.builtin.command:
-    chdir: "{{ app_workdir }}"
-    cmd: "{{ docker_compose_cmd_up }} --no-start"
+    cmd: "docker run --rm --entrypoint='' -u 0:0 -v {{ app_workdir }}/conf/zookeeper:/out -w /opt/bitnami/zookeeper/conf {{ image_zookeeper }} sh -c 'cp -nt /out ./* ; exit 0'"
 
-- name: "Docker: preseed ZooKeeper configuration"
-  ansible.builtin.command:
-    cmd: "docker run --rm --entrypoint='' -u 0:0 -v {{ app_workdir }}/conf/zookeeper:/out -w /opt/bitnami/zookeeper/conf {{ image_registry }}/{{ image_zookeeper }} sh -c 'cp -nt /out ./* ; exit 0'"
-
-- name: "adjust ownership: ZooKeeper configuration"
+- name: "ZooKeeper: adjust filesystem"
+  tags: [ install, update ]
   ansible.builtin.command:
     cmd: "chown -R {{ app_uid }}:{{ app_gid }} {{ app_workdir }}/conf/zookeeper"
 
-- name: "Docker Compose: run one by one"
-  throttle: 1
-  async: 120
-  poll: 10
-  ansible.builtin.command:
-    chdir: "{{ app_workdir }}"
-    cmd: "{{ docker_compose_cmd_up }}"
+- name: "tasks: app-common::docker-compose-run"
+  tags: [ install, update ]
+  ansible.builtin.include_role:
+    name: app-common
+    tasks_from: docker-compose-run
+
+- name: "tasks: app-common::docker-compose-verify"
+  tags: [ install, update, status ]
+  ansible.builtin.include_role:
+    name: app-common
+    tasks_from: docker-compose-verify
+
+- name: "output ZooKeeper connect string"
+  tags: [ install, update, status ]
+  changed_when: false
+  delegate_to: localhost
+  run_once: true
+  ansible.builtin.debug:
+    msg: "ZooKeeper connect string: {{ zk_connect_hosts }}"
