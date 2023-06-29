@@ -1,31 +1,57 @@
 ---
 
-- name: "install ca-certificates"
+- name: "APT: verify ca-certificates"
+  tags: [ status ]
+  # try to avoid changes in system
+  become_user: nobody
+  ansible.builtin.apt:
+    name: "ca-certificates"
+  vars:
+    ansible_remote_tmp: "/tmp"
+
+- name: "APT: update package cache / verify config"
+  tags: [ install, update ]
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: "APT: install ca-certificates"
   tags: [ install ]
   ansible.builtin.apt:
     name: "ca-certificates"
-    update_cache: yes
 
-- name: "enumerate extra CA certificates on Ansible host at {{ extra_ca_src_dir }}/"
-  tags: [ install, configure ]
+- name: "APT: update ca-certificates"
+  tags: [ update ]
+  ansible.builtin.apt:
+    name: "ca-certificates"
+    state: latest
+
+- name: "APT: cleanup"
+  tags: [ install, update ]
+  changed_when: false
+  ansible.builtin.apt:
+    clean: true
+
+- name: "extra CA certificates: fileglob {{ extra_ca_src_mask }}"
+  tags: [ install, update ]
   delegate_to: localhost
-  run_once: True
+  run_once: true
   changed_when: false
   ansible.builtin.set_fact:
     extra_ca_files: "{{ extra_ca_src_mask | fileglob }}"
 
-- name: "copy extra CA certificates"
-  tags: [ install, configure ]
-  when: extra_ca_files is defined and extra_ca_files
-  loop: "{{ extra_ca_files }}"
-  ansible.builtin.copy:
-    src: "{{ item }}"
-    dest: "{{ extra_ca_dst_dir }}/"
-    owner: root
-    group: root
-    mode: "0644"
+- name: "extra CA certificates: install"
+  tags: [ install, update ]
+  when: (extra_ca_files is defined) and (extra_ca_files)
+  block:
 
-- name: "update CA certificates"
-  tags: [ install, configure ]
-  when: extra_ca_files is defined and extra_ca_files
-  ansible.builtin.command: "update-ca-certificates"
+    - name: "extra CA certificates: copy"
+      loop: "{{ extra_ca_files }}"
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: "{{ extra_ca_dst_dir }}/"
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: "update CA certificates"
+      ansible.builtin.command: "update-ca-certificates"
