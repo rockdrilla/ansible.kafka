@@ -1,0 +1,10 @@
+---
+
+- name: "Docker Compose: run one by one"
+  tags: [ install, update ]
+  throttle: "{{ (docker_compose_up_parallel | default(1)) | int }}"
+  async: "{{ (docker_compose_timeout | int) }}"
+  poll: 15
+  ansible.builtin.command:
+    chdir: "{{ app_workdir }}"
+    cmd: "{{ docker_compose_cmd_up }}"

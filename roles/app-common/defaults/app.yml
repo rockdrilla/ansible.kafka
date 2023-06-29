@@ -1,0 +1,17 @@
+---
+
+app_name:
+app_rootdir: "/data"
+app_workdir: "{{ app_rootdir }}/{{ app_name }}"
+
+# for Ansible host
+playbook_tmpdir: "{{ playbook_dir }}/tmp.{{ app_name }}"
+
+app_uid: "10001"
+app_gid: "10001"
+
+# "inventory" = use "ansible_host" from inventory (default)
+# "fqdn"      = use "ansible_fqdn" from host
+# "ipv4"      = use default/first IPv4 address from host
+# "custom"    = use host attribute "host_addr" from inventory
+# host_addr_type: "inventory"

@@ -1,0 +1,10 @@
+---
+
+- name: "assemble: {{ playbook_tmpdir }}/docker-compose.yml.j2 <- {{ playbook_tmpdir }}/docker-compose.d/"
+  tags: [ install, update ]
+  delegate_to: localhost
+  run_once: true
+  changed_when: false
+  ansible.builtin.assemble:
+    src: "{{ playbook_tmpdir }}/docker-compose.d"
+    dest: "{{ playbook_tmpdir }}/docker-compose.yml.j2"

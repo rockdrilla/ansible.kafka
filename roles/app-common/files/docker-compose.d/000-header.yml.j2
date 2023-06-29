@@ -1,0 +1,9 @@
+version: '3.8'
+
+x-pod-defaults: &pod_defaults
+  network_mode: host
+  restart: always
+  hostname: "{{ ansible_fqdn }}"
+  user: "{{ app_uid }}:{{ app_gid }}"
+
+services:

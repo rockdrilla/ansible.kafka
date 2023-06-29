@@ -1,0 +1,14 @@
+---
+
+- name: "app: create directories"
+  tags: [ install, update ]
+  with_items:
+    - "{{ app_workdir }}"
+    - "{{ app_workdir }}/conf"
+    - "{{ app_workdir }}/data"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"

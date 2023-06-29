@@ -8,9 +8,9 @@
 
 - name: "fact: sysarches"
   tags: [ install, update ]
-  changed_when: false
   delegate_to: localhost
   run_once: true
+  changed_when: false
   ansible.builtin.set_fact:
     sysarches: "{% for item in ansible_play_batch %}{{ hostvars[item]['sysarch'] }},{% endfor %}"
 
@@ -18,6 +18,7 @@
   tags: [ install, update ]
   delegate_to: localhost
   run_once: true
+  changed_when: false
   ansible.builtin.set_fact:
     sysarches: "{{ sysarches.split(',') | select() | unique }}"
 
@@ -26,6 +27,7 @@
   when: docker_compose_uri_verify | bool
   delegate_to: localhost
   run_once: true
+  changed_when: false
   loop: "{{ sysarches }}"
   ansible.builtin.uri:
     url: "{{ docker_compose_uri_prefix }}/docker-compose-{{ item }}"
@@ -39,8 +41,8 @@
   tags: [ install, update ]
   delegate_to: localhost
   run_once: true
-  loop: "{{ sysarches }}"
   changed_when: false
+  loop: "{{ sysarches }}"
   ansible.builtin.get_url:
     url: "{{ docker_compose_uri_prefix }}/docker-compose-{{ item }}"
     dest: "./docker-compose-{{ docker_compose_version }}-{{ item }}"
@@ -76,6 +78,7 @@
 
 - name: "Docker Compose: verify binary"
   tags: [ install, update, status ]
+  changed_when: false
   ansible.builtin.command:
     argv:
       - "{{ docker_compose_binary }}"

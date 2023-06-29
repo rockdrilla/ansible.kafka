@@ -1,0 +1,20 @@
+---
+
+- name: "verify fact: preseed_src"
+  tags: [ install, update ]
+  delegate_to: localhost
+  run_once: true
+  changed_when: false
+  when: (preseed_src is not defined) or ((preseed_src | string) == "")
+  ansible.builtin.fail:
+    msg: "preseed_src is empty"
+
+- name: "preseed: {{ preseed_src }}/* -> {{ playbook_tmpdir }}/"
+  tags: [ install, update ]
+  delegate_to: localhost
+  run_once: true
+  changed_when: false
+  ansible.builtin.copy:
+    src: "{{ preseed_src }}/"
+    dest: "{{ playbook_tmpdir }}"
+    force: true

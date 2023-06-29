@@ -1,0 +1,29 @@
+---
+
+- name: "Docker Compose: stop previous installation"
+  tags: [ update ]
+  ignore_errors: true
+  throttle: 2
+  async: "{{ (docker_compose_timeout | int) }}"
+  poll: 5
+  ansible.builtin.command:
+    chdir: "{{ app_workdir }}"
+    cmd: "{{ docker_compose_cmd_down }}"
+
+- name: "Docker Compose: create manifest"
+  tags: [ install, update ]
+  ansible.builtin.template:
+    src: "{{ playbook_tmpdir }}/docker-compose.yml.j2"
+    dest: "{{ app_workdir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0640"
+
+- name: "Docker Compose: prepare"
+  tags: [ install, update ]
+  throttle: 2
+  async: "{{ (docker_compose_timeout | int) }}"
+  poll: 10
+  ansible.builtin.command:
+    chdir: "{{ app_workdir }}"
+    cmd: "{{ docker_compose_cmd_up }} --no-start"
