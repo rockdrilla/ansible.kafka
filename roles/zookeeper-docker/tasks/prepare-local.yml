@@ -1,0 +1,23 @@
+---
+
+- name: "tasks: app-common::prepare-local"
+  tags: [ install, update ]
+  ansible.builtin.include_role:
+    name: app-common
+    tasks_from: prepare-local
+
+- name: "fact: preseed_src_zk"
+  tags: [ install, update ]
+  delegate_to: localhost
+  run_once: true
+  changed_when: false
+  ansible.builtin.set_fact:
+    preseed_src_zk: "{{ role_path }}/files"
+
+- name: "tasks: app-common::preseed-local"
+  tags: [ install, update ]
+  ansible.builtin.include_role:
+    name: app-common
+    tasks_from: preseed-local
+  vars:
+    preseed_src: "{{ preseed_src_zk }}"

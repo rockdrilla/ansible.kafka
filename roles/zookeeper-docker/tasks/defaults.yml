@@ -1,0 +1,33 @@
+---
+
+- name: "defaults: app-common::main"
+  tags: [ always ]
+  ansible.builtin.include_role:
+    name: app-common
+    public: true
+    defaults_from: app
+    tasks_from: _none_
+
+- name: "defaults: docker-compose::main"
+  tags: [ always ]
+  ansible.builtin.include_role:
+    name: docker-compose
+    public: true
+    defaults_from: main
+    tasks_from: _none_
+
+- name: "defaults: app-common::docker"
+  tags: [ always ]
+  ansible.builtin.include_role:
+    name: app-common
+    public: true
+    defaults_from: docker
+    tasks_from: _none_
+
+- name: "defaults: zk"
+  tags: [ always ]
+  ansible.builtin.include_role:
+    name: zookeeper-docker
+    public: true
+    defaults_from: zk
+    tasks_from: _none_

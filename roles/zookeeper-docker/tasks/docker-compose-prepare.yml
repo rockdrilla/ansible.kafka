@@ -1,6 +1,7 @@
 ---
 
 - name: "tasks: app-common::docker-compose-prepare"
+  tags: [ install, update ]
   ansible.builtin.include_role:
     name: app-common
     tasks_from: docker-compose-prepare
@@ -13,11 +14,11 @@
     cmd: "find ./ -xdev -mindepth 1 -delete"
 
 - name: "ZooKeeper: refresh 'myid'"
-  tags: [ update ]
+  tags: [ never ]
   ignore_errors: true
   ansible.builtin.copy:
     content: "{{ zk_server_id }}"
-    dest: "{{ app_workdir }}/data/zookeeper/myid"
+    dest: "{{ zk_myid_path }}"
     owner: "{{ app_uid }}"
     group: "{{ app_gid }}"
     mode: "0644"

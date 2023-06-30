@@ -19,3 +19,7 @@ zk_election_port: 3888
 zk_jmx_port: 5557
 zk_jmx_exporter_port: 9002
 zk_exporter_port: 9091
+
+# internal variables
+
+zk_myid_path: "{{ app_workdir }}/data/zookeeper/data/myid"

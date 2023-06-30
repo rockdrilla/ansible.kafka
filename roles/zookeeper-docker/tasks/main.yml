@@ -1,30 +1,19 @@
 ---
 
-- tags: [ always ]
-  ansible.builtin.import_tasks:
+- ansible.builtin.import_tasks:
+    file: defaults.yml
+
+- name: "tasks: app-common::check-basic"
+  tags: [ always ]
+  ansible.builtin.include_role:
+    name: app-common
+    tasks_from: check-basic
+
+- ansible.builtin.import_tasks:
     file: generate-facts.yml
 
-- name: "tasks: app-common::prepare-local"
-  tags: [ install, update ]
-  ansible.builtin.include_role:
-    name: app-common
-    tasks_from: prepare-local
-
-- name: "fact: preseed_src_zk"
-  tags: [ install, update ]
-  changed_when: false
-  delegate_to: localhost
-  run_once: true
-  ansible.builtin.set_fact:
-    preseed_src_zk: "{{ role_path }}/files"
-
-- name: "tasks: app-common::preseed-local"
-  tags: [ install, update ]
-  ansible.builtin.include_role:
-    name: app-common
-    tasks_from: preseed-local
-  vars:
-    preseed_src: "{{ preseed_src_zk }}"
+- ansible.builtin.import_tasks:
+    file: prepare-local.yml
 
 - name: "tasks: app-common::assemble-docker-compose"
   tags: [ install, update ]
@@ -32,23 +21,14 @@
     name: app-common
     tasks_from: assemble-docker-compose
 
-- tags: [ install, update ]
-  ansible.builtin.import_tasks:
+- ansible.builtin.import_tasks:
     file: prepare-remote.yml
 
-- tags: [ install, update ]
-  ansible.builtin.import_tasks:
+- ansible.builtin.import_tasks:
     file: docker-compose-prepare.yml
 
-- name: "Docker: preseed default ZooKeeper configuration"
-  tags: [ install, update ]
-  ansible.builtin.command:
-    cmd: "docker run --rm --entrypoint='' -u 0:0 -v {{ app_workdir }}/conf/zookeeper:/out -w /opt/bitnami/zookeeper/conf {{ image_zookeeper }} sh -c 'cp -nt /out ./* ; exit 0'"
-
-- name: "ZooKeeper: adjust filesystem"
-  tags: [ install, update ]
-  ansible.builtin.command:
-    cmd: "chown -R {{ app_uid }}:{{ app_gid }} {{ app_workdir }}/conf/zookeeper"
+- ansible.builtin.import_tasks:
+    file: preseed-remote.yml
 
 - name: "tasks: app-common::docker-compose-run"
   tags: [ install, update ]
@@ -57,15 +37,15 @@
     tasks_from: docker-compose-run
 
 - name: "tasks: app-common::docker-compose-verify"
-  tags: [ install, update, status ]
+  tags: [ always ]
   ansible.builtin.include_role:
     name: app-common
     tasks_from: docker-compose-verify
 
 - name: "output ZooKeeper connect string"
-  tags: [ install, update, status ]
-  changed_when: false
+  tags: [ always ]
   delegate_to: localhost
   run_once: true
+  changed_when: false
   ansible.builtin.debug:
     msg: "ZooKeeper connect string: {{ zk_connect_hosts }}"

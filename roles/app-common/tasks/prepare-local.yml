@@ -1,9 +1,5 @@
 ---
 
-- tags: [ always ]
-  ansible.builtin.import_tasks:
-    file: check-basic.yml
-
 - name: "wipe temporary directory for playbook/role files: {{ playbook_tmpdir }}"
   tags: [ install, update ]
   delegate_to: localhost
@@ -25,8 +21,7 @@
     state: directory
     mode: "0755"
 
-- tags: [ always ]
-  ansible.builtin.import_tasks:
+- ansible.builtin.import_tasks:
     file: preseed-local.yml
   vars:
     preseed_src: "{{ role_path }}/files"

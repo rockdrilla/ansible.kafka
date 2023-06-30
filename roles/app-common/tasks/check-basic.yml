@@ -1,10 +1,7 @@
 ---
 
-- name: "verify fact: app_name"
-  tags: [ always ]
-  delegate_to: localhost
-  run_once: true
-  changed_when: false
-  when: (app_name is not defined) or ((app_name | string) == "")
-  ansible.builtin.fail:
-    msg: "app_name is empty"
+- ansible.builtin.import_tasks:
+    file: check-tags.yml
+
+- ansible.builtin.import_tasks:
+    file: check-app-name.yml

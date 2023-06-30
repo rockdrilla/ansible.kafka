@@ -1,5 +1,11 @@
 ---
 
+- name: "tasks: app-common::check-tags"
+  tags: [ always ]
+  ansible.builtin.include_role:
+    name: app-common
+    tasks_from: check-tags
+
 - name: "APT: verify ca-certificates"
   tags: [ status ]
   # try to avoid changes in system
@@ -14,16 +20,11 @@
   ansible.builtin.apt:
     update_cache: true
 
-- name: "APT: install ca-certificates"
-  tags: [ install ]
+- name: "APT: ca-certificates package"
+  tags: [ install, update ]
   ansible.builtin.apt:
     name: "ca-certificates"
-
-- name: "APT: update ca-certificates"
-  tags: [ update ]
-  ansible.builtin.apt:
-    name: "ca-certificates"
-    state: latest
+    state: "{% if ('update' in ansible_run_tags) }latest{% else %}present{% endif %}"
 
 - name: "APT: cleanup"
   tags: [ install, update ]

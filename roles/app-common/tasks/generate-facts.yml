@@ -1,11 +1,13 @@
 ---
 
 - name: "fact: host_idx"
+  tags: [ always ]
   changed_when: false
   ansible.builtin.set_fact:
     host_idx: "{{ ansible_play_batch.index(inventory_hostname) + 1 }}"
 
 - name: "fact: host_addr_type"
+  tags: [ always ]
   delegate_to: localhost
   run_once: true
   changed_when: false
@@ -13,31 +15,37 @@
     host_addr_type: "{{ host_addr_type | default('inventory') }}"
 
 - name: "fact: host_addr_type"
+  tags: [ always ]
   changed_when: false
   ansible.builtin.set_fact:
     host_addr_type: "{{ hostvars[inventory_hostname]['host_addr_type'] | default(host_addr_type) }}"
 
-- name: "fact: host_addr"
+- tags: [ always ]
   block:
 
-    - when: hostvars[inventory_hostname]['host_addr_type'] == "fqdn"
+    - name: "fact: host_addr via: fqdn"
+      when: hostvars[inventory_hostname]['host_addr_type'] == "fqdn"
       changed_when: false
       ansible.builtin.set_fact:
         host_addr: "{{ hostvars[inventory_hostname]['ansible_fqdn'] }}"
 
-    - when: hostvars[inventory_hostname]['host_addr_type'] == "ipv4"
+    - name: "fact: host_addr via: ipv4"
+      when: hostvars[inventory_hostname]['host_addr_type'] == "ipv4"
       changed_when: false
       ansible.builtin.set_fact:
         host_addr: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] | default(hostvars[inventory_hostname]['ansible_all_ipv4_addresses'][0]) }}"
 
-    - when: hostvars[inventory_hostname]['host_addr_type'] == "inventory"
+    - name: "fact: host_addr via: inventory"
+      when: hostvars[inventory_hostname]['host_addr_type'] == "inventory"
       changed_when: false
       ansible.builtin.set_fact:
         host_addr: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
 
-- ansible.builtin.meta: flush_handlers
+- tags: [ always ]
+  ansible.builtin.meta: flush_handlers
 
 - name: "verify fact: host_addr"
+  tags: [ always ]
   when: (host_addr is not defined) or ((host_addr | string) == "")
   ansible.builtin.fail:
     msg: "host_addr is empty"

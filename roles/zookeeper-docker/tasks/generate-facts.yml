@@ -1,59 +1,16 @@
 ---
 
-- name: "defaults: zk"
-  ansible.builtin.include_role:
-    name: "{{ role_name }}"
-    public: true
-    defaults_from: zk
-    tasks_from: _none_
-
-- name: "defaults: app-common::main"
-  ansible.builtin.include_role:
-    name: app-common
-    public: true
-    defaults_from: app
-    tasks_from: _none_
-
-- name: "defaults: docker-compose::main"
-  ansible.builtin.include_role:
-    name: docker-compose
-    public: true
-    defaults_from: main
-    tasks_from: _none_
-
-- name: "defaults: app-common::docker"
-  ansible.builtin.include_role:
-    name: app-common
-    public: true
-    defaults_from: docker
-    tasks_from: _none_
-
 - name: "tasks: app-common::generate-facts"
+  tags: [ always ]
   ansible.builtin.include_role:
     name: app-common
     tasks_from: generate-facts
 
-- name: "fact: zk_server_id"
-  when: zk_server_id is not defined
-  ignore_errors: true
-  changed_when: false
-  ansible.builtin.slurp:
-    src: "{{ app_workdir }}/data/zookeeper/myid"
-  register: ctx_myid
-
-- name: "fact: zk_server_id"
-  when: (ctx_myid is defined) and (ctx_myid.content is defined)
-  changed_when: false
-  ansible.builtin.set_fact:
-    zk_server_id: "{{ ctx_myid.content | b64decode }}"
-
-- name: "fact: zk_server_id"
-  when: zk_server_id is not defined
-  changed_when: false
-  ansible.builtin.set_fact:
-    zk_server_id: "{{ hostvars[inventory_hostname]['zk_server_id'] | default(host_idx) }}"
+- ansible.builtin.import_tasks:
+    file: generate-id.yml
 
 - name: "fact: zk_observer, zk_follower_port, zk_election_port, zk_client_port"
+  tags: [ always ]
   changed_when: false
   ansible.builtin.set_fact:
     zk_observer: "{{ hostvars[inventory_hostname]['zk_observer'] | default(zk_observer) }}"
@@ -62,17 +19,20 @@
     zk_client_port: "{{ hostvars[inventory_hostname]['zk_client_port'] | default(zk_client_port) }}"
 
 - name: "fact: zk_server_sfx"
+  tags: [ always ]
   changed_when: false
   ansible.builtin.set_fact:
     zk_server_sfx: "{% if (zk_observer | bool) %}:observer{% endif %}{% if (zk_use_ids | bool) %}::{{ zk_server_id }}{% endif %}"
 
 - name: "fact: zk_server, zk_connect_host"
+  tags: [ always ]
   changed_when: false
   ansible.builtin.set_fact:
     zk_server: "{{ host_addr }}:{{ zk_follower_port }}:{{ zk_election_port }}{{ zk_server_sfx }}"
     zk_connect_host: "{{ host_addr }}:{{ zk_client_port }}"
 
 - name: "fact: zk_servers, zk_connect_hosts"
+  tags: [ always ]
   delegate_to: localhost
   run_once: true
   changed_when: false
@@ -81,6 +41,7 @@
     zk_connect_hosts: "{% for item in ansible_play_batch %}{{ hostvars[item]['zk_connect_host'] }},{% endfor %}"
 
 - name: "fact: zk_servers, zk_connect_hosts"
+  tags: [ always ]
   delegate_to: localhost
   run_once: true
   changed_when: false

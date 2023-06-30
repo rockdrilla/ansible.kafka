@@ -1,0 +1,42 @@
+---
+
+- name: "fact: zk_server_id from existing installation"
+  tags: [ update, status ]
+  when: zk_server_id is not defined
+  ignore_errors: "{{ 'update' in ansible_run_tags }}"
+  changed_when: false
+  ansible.builtin.slurp:
+    src: "{{ zk_myid_path }}"
+  register: ctx_myid
+
+- name: "fact: zk_server_id from existing installation"
+  tags: [ update, status ]
+  when: (ctx_myid is defined) and (ctx_myid.content is defined)
+  changed_when: false
+  ansible.builtin.set_fact:
+    zk_server_id: "{{ ctx_myid.content | b64decode }}"
+
+- name: "fact: zk_server_id from host_idx"
+  tags: [ always ]
+  when: hostvars[inventory_hostname]['zk_server_id'] is not defined
+  changed_when: false
+  ansible.builtin.set_fact:
+    zk_server_id: "{{ host_idx }}"
+
+- name: "ZooKeeper: verify server id's"
+  tags: [ always ]
+  delegate_to: localhost
+  run_once: true
+  changed_when: false
+  loop: "{{ ansible_play_batch }}"
+  when: (hostvars[item]['zk_server_id'] | int) < 1
+  ansible.builtin.fail:
+    msg: "{{ item }} has invalid server id: {{ hostvars[item]['zk_server_id'] }}"
+
+- name: "ZooKeeper: verify server id uniqueness"
+  tags: [ always ]
+  changed_when: false
+  loop: "{{ ansible_play_batch }}"
+  when: (zk_server_id == hostvars[item]['zk_server_id']) and (inventory_hostname != item)
+  ansible.builtin.fail:
+    msg: "{{ item }} and {{ inventory_hostname }} are sharing same server id ({{ zk_server_id }})"

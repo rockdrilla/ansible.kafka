@@ -1,5 +1,11 @@
 ---
 
+- name: "tasks: app-common::check-tags"
+  tags: [ always ]
+  ansible.builtin.include_role:
+    name: app-common
+    tasks_from: check-tags
+
 - name: "fact: sysarch"
   tags: [ install, update ]
   changed_when: false

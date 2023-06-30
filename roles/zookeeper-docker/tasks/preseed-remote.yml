@@ -1,0 +1,11 @@
+---
+
+- name: "Docker: preseed default ZooKeeper configuration"
+  tags: [ install, update ]
+  ansible.builtin.command:
+    cmd: "docker run --rm --entrypoint='' -u 0:0 -v {{ app_workdir }}/conf/zookeeper:/out -w /opt/bitnami/zookeeper/conf {{ image_zookeeper }} sh -c 'cp -nt /out ./* ; exit 0'"
+
+- name: "ZooKeeper: adjust filesystem"
+  tags: [ install, update ]
+  ansible.builtin.command:
+    cmd: "chown -R {{ app_uid }}:{{ app_gid }} {{ app_workdir }}/conf/zookeeper"

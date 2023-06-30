@@ -1,0 +1,19 @@
+---
+
+- name: "tags: verify"
+  tags: [ always ]
+  delegate_to: localhost
+  run_once: true
+  changed_when: false
+  when: (ansible_run_tags | intersect(supported_tags) | count) != 1
+  ansible.builtin.fail:
+    msg: "specify exactly one tag from following list: {{ supported_tags }}"
+  vars:
+    supported_tags: [ 'install','update','status' ]
+
+- tags: [ always ]
+  delegate_to: localhost
+  run_once: true
+  changed_when: false
+  ansible.builtin.debug:
+    msg: "Playbook flavour: {{ ansible_run_tags[0] }}"

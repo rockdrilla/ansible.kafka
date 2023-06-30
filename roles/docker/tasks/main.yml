@@ -1,5 +1,11 @@
 ---
 
+- name: "tasks: app-common::check-tags"
+  tags: [ always ]
+  ansible.builtin.include_role:
+    name: app-common
+    tasks_from: check-tags
+
 - name: "Docker: verify binary"
   tags: [ status ]
   changed_when: false
@@ -107,16 +113,11 @@
   vars:
     ansible_remote_tmp: "/tmp"
 
-- name: "APT: install Docker package(s)"
-  tags: [ install ]
+- name: "APT: Docker package(s)"
+  tags: [ install, update ]
   ansible.builtin.apt:
     name: "{{ docker_packages }}"
-
-- name: "APT: update Docker package(s)"
-  tags: [ update ]
-  ansible.builtin.apt:
-    name: "{{ docker_packages }}"
-    state: latest
+    state: "{% if ('update' in ansible_run_tags) }latest{% else %}present{% endif %}"
 
 - name: "APT: install extra packages (if any)"
   tags: [ install, update ]
