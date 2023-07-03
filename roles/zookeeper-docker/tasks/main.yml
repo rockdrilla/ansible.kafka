@@ -24,8 +24,11 @@
 - ansible.builtin.import_tasks:
     file: prepare-remote.yml
 
-- ansible.builtin.import_tasks:
-    file: docker-compose-prepare.yml
+- name: "tasks: app-common::docker-compose-prepare"
+  tags: [ install, update ]
+  ansible.builtin.include_role:
+    name: app-common
+    tasks_from: docker-compose-prepare
 
 - ansible.builtin.import_tasks:
     file: preseed-remote.yml

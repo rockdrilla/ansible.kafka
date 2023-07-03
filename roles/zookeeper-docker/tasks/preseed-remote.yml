@@ -1,11 +1,19 @@
 ---
 
+- name: "ZooKeeper: flush configuration"
+  tags: [ update ]
+  ignore_errors: true
+  ansible.builtin.command:
+    chdir: "{{ app_workdir }}/conf/zookeeper"
+    cmd: "find ./ -xdev -mindepth 1 -delete"
+
 - name: "Docker: preseed default ZooKeeper configuration"
   tags: [ install, update ]
   ansible.builtin.command:
-    cmd: "docker run --rm --entrypoint='' -u 0:0 -v {{ app_workdir }}/conf/zookeeper:/out -w /opt/bitnami/zookeeper/conf {{ image_zookeeper }} sh -c 'cp -nt /out ./* ; exit 0'"
+    argv: [ "docker", "run", "--rm", "--entrypoint=", "-u", "0:0", "-v", "{{ app_workdir }}/conf/zookeeper:/out", "-w", "/opt/bitnami/zookeeper/conf", "{{ image_zookeeper }}", "sh", "-c", "cp -nt /out ./* ; exit 0" ]
 
 - name: "ZooKeeper: adjust filesystem"
   tags: [ install, update ]
   ansible.builtin.command:
-    cmd: "chown -R {{ app_uid }}:{{ app_gid }} {{ app_workdir }}/conf/zookeeper"
+    chdir: "{{ app_workdir }}"
+    cmd: "chown -R {{ app_uid }}:{{ app_gid }} ./conf/zookeeper"
