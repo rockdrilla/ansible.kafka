@@ -37,14 +37,5 @@
   run_once: true
   changed_when: false
   ansible.builtin.set_fact:
-    zk_servers: "{% for item in ansible_play_batch %}{{ hostvars[item]['zk_server'] }},{% endfor %}"
-    zk_connect_hosts: "{% for item in ansible_play_batch %}{{ hostvars[item]['zk_connect_host'] }},{% endfor %}"
-
-- name: "fact: zk_servers, zk_connect_hosts"
-  tags: [ always ]
-  delegate_to: localhost
-  run_once: true
-  changed_when: false
-  ansible.builtin.set_fact:
-    zk_servers: "{{ ','.join(zk_servers.split(',') | select()) }}"
-    zk_connect_hosts: "{{ ','.join(zk_connect_hosts.split(',') | select()) }}"
+    zk_servers: "{{ ','.join(ansible_play_batch | map('extract', hostvars, 'zk_server') | list) }}"
+    zk_connect_hosts: "{{ ','.join(ansible_play_batch | map('extract', hostvars, 'zk_connect_host') | list) }}"

@@ -18,15 +18,7 @@
   run_once: true
   changed_when: false
   ansible.builtin.set_fact:
-    sysarches: "{% for item in ansible_play_batch %}{{ hostvars[item]['sysarch'] }},{% endfor %}"
-
-- name: "fact: sysarches"
-  tags: [ install, update ]
-  delegate_to: localhost
-  run_once: true
-  changed_when: false
-  ansible.builtin.set_fact:
-    sysarches: "{{ sysarches.split(',') | select() | unique }}"
+    sysarches: "{{ ansible_play_batch | map('extract', hostvars, 'sysarch') | list | unique }}"
 
 - name: "Docker Compose: verify URIs"
   tags: [ install, update ]
