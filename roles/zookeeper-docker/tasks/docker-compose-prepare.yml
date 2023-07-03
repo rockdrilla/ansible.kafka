@@ -12,13 +12,3 @@
   ansible.builtin.command:
     chdir: "{{ app_workdir }}/conf/zookeeper"
     cmd: "find ./ -xdev -mindepth 1 -delete"
-
-- name: "ZooKeeper: refresh 'myid'"
-  tags: [ never ]
-  ignore_errors: true
-  ansible.builtin.copy:
-    content: "{{ zk_server_id }}"
-    dest: "{{ zk_myid_path }}"
-    owner: "{{ app_uid }}"
-    group: "{{ app_gid }}"
-    mode: "0644"
