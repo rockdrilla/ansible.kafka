@@ -19,7 +19,7 @@
     zk_client_port: "{{ hostvars[inventory_hostname]['zk_client_port'] | default(zk_client_port) }}"
 
 - tags: [ always ]
-  when: (zk_server_id_first | int) > 0
+  when: (zk_sane_first_server_id | int) > 0
   block:
 
     - name: "ZooKeeper: verify zk_server_id against zk_observer"
@@ -27,7 +27,7 @@
       run_once: true
       changed_when: false
       loop: "{{ ansible_play_batch }}"
-      when: ((hostvars[item]['zk_server_id'] | int) == zk_server_id_first) and (hostvars[item]['zk_observer'] | bool)
+      when: ((hostvars[item]['zk_server_id'] | int) == zk_sane_first_server_id) and (hostvars[item]['zk_observer'] | bool)
       ansible.builtin.fail:
         msg: "{{ item }} is 'first' zookeeper server but it's observer node"
 

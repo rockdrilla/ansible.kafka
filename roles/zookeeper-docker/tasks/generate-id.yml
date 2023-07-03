@@ -40,21 +40,33 @@
   ansible.builtin.fail:
     msg: "{{ item }} and {{ inventory_hostname }} are sharing same server id ({{ zk_server_id }})"
 
-- tags: [ always ]
-  when: (zk_server_id_first | int) > 0
-  block:
+- name: "ZooKeeper: determine minimal server id"
+  tags: [ always ]
+  delegate_to: localhost
+  run_once: true
+  changed_when: false
+  ansible.builtin.set_fact:
+    zk_first_server_id: "{{ ansible_play_batch | map('extract', hostvars, 'zk_server_id') | list | min }}"
 
-    - name: "ZooKeeper: determine minimal server id"
-      delegate_to: localhost
-      run_once: true
-      changed_when: false
-      ansible.builtin.set_fact:
-        zk_server_id_lo: "{{ ansible_play_batch | map('extract', hostvars, 'zk_server_id') | list | min }}"
+- tags: [ always ]
+  when: (zk_sane_first_server_id | int) > 0
+  block:
 
     - name: "ZooKeeper: verify minimal server id"
       delegate_to: localhost
       run_once: true
       changed_when: false
-      when: (zk_server_id_first | int) < (zk_server_id_lo | int)
+      when: (zk_first_server_id | int) > (zk_sane_first_server_id | int)
       ansible.builtin.fail:
-        msg: "minimal server id is greater than {{ zk_server_id_first }}: {{ zk_server_id_lo }}"
+        msg: "minimal server id is greater than {{ zk_sane_first_server_id }}: {{ zk_first_server_id }}"
+
+# TODO: refactor
+- name: "ZooKeeper: Get first server by id"
+  tags: [ always ]
+  delegate_to: localhost
+  run_once: true
+  changed_when: false
+  loop: "{{ ansible_play_batch }}"
+  when: (hostvars[item]['zk_server_id'] == zk_first_server_id)
+  ansible.builtin.set_fact:
+    zk_first_server: "{{ item }}"

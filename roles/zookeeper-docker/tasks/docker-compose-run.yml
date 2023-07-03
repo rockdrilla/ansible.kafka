@@ -1,9 +1,28 @@
 ---
 
+- tags: [ install ]
+  block:
+
+    - name: "tasks: app-common::docker-compose-run"
+      ansible.builtin.include_role:
+        name: app-common
+        tasks_from: docker-compose-run
+      vars:
+        app_host_selector: "{{ zk_first_server }}"
+
+    - name: "Ansible: wait up to {{ docker_compose_timeout | int }} second(s) for first ZooKeeper server to bring up"
+      delegate_to: "{{ zk_first_server }}"
+      delegate_facts: true
+      run_once: true
+      async: "{{ (docker_compose_timeout | int) }}"
+      poll: 5
+      ansible.builtin.wait_for:
+        port: 8080
+        delay: 15
+        timeout: "{{ (docker_compose_timeout | int) }}"
+
 - name: "tasks: app-common::docker-compose-run"
   tags: [ install, update ]
   ansible.builtin.include_role:
     name: app-common
     tasks_from: docker-compose-run
-  vars:
-    docker_compose_up_throttle: 1
