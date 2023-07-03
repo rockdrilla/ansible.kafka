@@ -1,10 +1,47 @@
 ---
 
-- name: "Docker Compose: run (with parallel={{ docker_compose_up_throttle }})"
-  tags: [ install, update ]
-  throttle: "{{ docker_compose_up_throttle | int }}"
-  async: "{{ (docker_compose_timeout | int) }}"
-  poll: 15
-  ansible.builtin.command:
-    chdir: "{{ app_workdir }}"
-    cmd: "{{ docker_compose_cmd_up }}"
+- tags: [ install, update ]
+  block:
+
+    - name: "Ansible: check for both app_host_selector and app_group_selector"
+      delegate_to: localhost
+      run_once: true
+      changed_when: false
+      when: (app_host_selector is defined) and (app_group_selector is defined)
+      ansible.builtin.fail:
+        msg: "specify either app_host_selector or app_group_selector but not both"
+
+    - name: "Docker Compose: run (with parallel={{ docker_compose_up_throttle | int }})"
+      when: (app_host_selector is not defined) and (app_group_selector is not defined)
+      throttle: "{{ docker_compose_up_throttle | int }}"
+      async: "{{ (docker_compose_timeout | int) }}"
+      poll: 15
+      ansible.builtin.command:
+        chdir: "{{ app_workdir }}"
+        cmd: "{{ docker_compose_cmd_up }}"
+
+    - when: (app_host_selector is defined)
+      block:
+
+      - name: "Docker Compose: run for host '{{ app_host_selector }}'"
+        delegate_to: "{{ app_host_selector }}"
+        run_once: true
+        async: "{{ (docker_compose_timeout | int) }}"
+        poll: 15
+        ansible.builtin.command:
+          chdir: "{{ app_workdir }}"
+          cmd: "{{ docker_compose_cmd_up }}"
+
+    - when: (app_group_selector is defined)
+      block:
+
+      - name: "Docker Compose: run for group '{{ app_group_selector }}' (with parallel={{ docker_compose_up_throttle | int }})"
+        delegate_to: "{{ item }}"
+        delegate_facts: true
+        loop: "{{ groups[app_group_selector] }}"
+        throttle: "{{ docker_compose_up_throttle | int }}"
+        async: "{{ (docker_compose_timeout | int) }}"
+        poll: 15
+        ansible.builtin.command:
+          chdir: "{{ app_workdir }}"
+          cmd: "{{ docker_compose_cmd_up }}"
