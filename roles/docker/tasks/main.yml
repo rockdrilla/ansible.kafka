@@ -117,7 +117,7 @@
   tags: [ install, update ]
   ansible.builtin.apt:
     name: "{{ docker_packages }}"
-    state: "{% if ('update' in ansible_run_tags) }latest{% else %}present{% endif %}"
+    state: "{% if ('update' in ansible_run_tags) %}latest{% else %}present{% endif %}"
 
 - name: "APT: install extra packages (if any)"
   tags: [ install, update ]

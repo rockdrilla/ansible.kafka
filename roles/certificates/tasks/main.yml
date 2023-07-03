@@ -24,7 +24,7 @@
   tags: [ install, update ]
   ansible.builtin.apt:
     name: "ca-certificates"
-    state: "{% if ('update' in ansible_run_tags) }latest{% else %}present{% endif %}"
+    state: "{% if ('update' in ansible_run_tags) %}latest{% else %}present{% endif %}"
 
 - name: "APT: cleanup"
   tags: [ install, update ]
