@@ -1,16 +1,8 @@
 ---
 
-- name: "fact: docker_compose_run_throttle"
+- name: "Docker Compose: run (with parallel={{ docker_compose_up_throttle }})"
   tags: [ install, update ]
-  delegate_to: localhost
-  run_once: true
-  changed_when: false
-  ansible.builtin.set_fact:
-    docker_compose_run_throttle: "{% if ('install' in ansible_run_tags) %}1{% else %}{{ docker_compose_run_throttle | default(2) }}{% endif %}"
-
-- name: "Docker Compose: run (with parallel={{ docker_compose_run_throttle }})"
-  tags: [ install, update ]
-  throttle: "{{ docker_compose_run_throttle | int }}"
+  throttle: "{{ docker_compose_up_throttle | int }}"
   async: "{{ (docker_compose_timeout | int) }}"
   poll: 15
   ansible.builtin.command:

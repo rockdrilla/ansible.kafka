@@ -3,7 +3,7 @@
 - name: "Docker Compose: stop previous installation"
   tags: [ update ]
   ignore_errors: true
-  throttle: 2
+  throttle: "{{ (docker_compose_down_throttle | int) }}"
   async: "{{ (docker_compose_timeout | int) }}"
   poll: 5
   ansible.builtin.command:
@@ -21,7 +21,7 @@
 
 - name: "Docker Compose: prepare"
   tags: [ install, update ]
-  throttle: 2
+  throttle: "{{ (docker_compose_up_throttle | int) }}"
   async: "{{ (docker_compose_timeout | int) }}"
   poll: 10
   ansible.builtin.command:

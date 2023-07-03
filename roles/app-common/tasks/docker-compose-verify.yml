@@ -2,7 +2,7 @@
 
 - name: "Docker Compose: verify all services"
   tags: [ install, update, status ]
-  throttle: 2
+  throttle: "{{ docker_compose_up_throttle | int }}"
   async: "{{ (docker_compose_timeout | int) }}"
   poll: 5
   changed_when: false
@@ -14,7 +14,7 @@
 
 - name: "Docker Compose: verify running services"
   tags: [ install, update, status ]
-  throttle: 2
+  throttle: "{{ docker_compose_up_throttle | int }}"
   async: "{{ (docker_compose_timeout | int) }}"
   poll: 5
   changed_when: false

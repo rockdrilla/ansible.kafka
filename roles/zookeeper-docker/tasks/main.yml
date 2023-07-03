@@ -30,11 +30,8 @@
 - ansible.builtin.import_tasks:
     file: preseed-remote.yml
 
-- name: "tasks: app-common::docker-compose-run"
-  tags: [ install, update ]
-  ansible.builtin.include_role:
-    name: app-common
-    tasks_from: docker-compose-run
+- ansible.builtin.import_tasks:
+    file: docker-compose-run.yml
 
 - name: "tasks: app-common::docker-compose-verify"
   tags: [ always ]

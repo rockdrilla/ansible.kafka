@@ -1,0 +1,9 @@
+---
+
+- name: "tasks: app-common::docker-compose-run"
+  tags: [ install, update ]
+  ansible.builtin.include_role:
+    name: app-common
+    tasks_from: docker-compose-run
+  vars:
+    docker_compose_up_throttle: 1
