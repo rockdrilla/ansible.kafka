@@ -27,7 +27,7 @@
       - zookeeper
     command:
       - "--listen=0.0.0.0:{{ zk_exporter_port }}"
-      - "--zk-hosts=127.0.0.1:{{ zk_client_port }}"
+      - "--zk-hosts={{ host_addr }}:{{ zk_client_port }}"
     volumes:
       - "/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro"
 
