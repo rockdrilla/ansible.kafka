@@ -100,7 +100,7 @@
     update_cache: true
 
 - name: "fact: docker_packages"
-  tags: [ install, update, status ]
+  tags: [ always ]
   ansible.builtin.set_fact:
     docker_packages: "{% if (docker_external_apt_repo | bool) %}{{ docker_packages_external }}{% else %}{{ docker_packages_native }}{% endif %}"
 
@@ -138,13 +138,13 @@
   failed_when: ctx_cmd.rc != 0
 
 - name: "fact: docker_daemon_config_changed"
-  tags: [ install, update, status ]
+  tags: [ always ]
   changed_when: false
   ansible.builtin.set_fact:
     docker_daemon_config_changed: false
 
 - name: "Docker: configure daemon"
-  tags: [ install, update, status ]
+  tags: [ always ]
   when: (docker_daemon_config is mapping) and (docker_daemon_config)
   block:
 

@@ -1,7 +1,7 @@
 ---
 
 - name: "Docker Compose: verify all services"
-  tags: [ install, update, status ]
+  tags: [ always ]
   throttle: "{{ docker_compose_up_throttle | int }}"
   async: "{{ (docker_compose_timeout | int) }}"
   poll: 5
@@ -13,7 +13,7 @@
   failed_when: ctx_svc_all.rc != 0
 
 - name: "Docker Compose: verify running services"
-  tags: [ install, update, status ]
+  tags: [ always ]
   throttle: "{{ docker_compose_up_throttle | int }}"
   async: "{{ (docker_compose_timeout | int) }}"
   poll: 5
@@ -25,7 +25,7 @@
   failed_when: ctx_svc_run.rc != 0
 
 - name: "Docker Compose: compare all vs running services"
-  tags: [ install, update, status ]
+  tags: [ always ]
   changed_when: false
   when: (ctx_svc_all.stdout | string) != (ctx_svc_run.stdout | string)
   ansible.builtin.fail:

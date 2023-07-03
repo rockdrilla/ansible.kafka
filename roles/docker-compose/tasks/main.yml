@@ -75,7 +75,7 @@
     state: absent
 
 - name: "Docker Compose: verify binary"
-  tags: [ install, update, status ]
+  tags: [ always ]
   changed_when: false
   ansible.builtin.command:
     argv:
