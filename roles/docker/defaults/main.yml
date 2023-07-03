@@ -2,7 +2,7 @@
 
 docker_packages_native: "docker.io"
 docker_packages_external: "docker-ce"
-docker_packages_extra: ""
+docker_packages_extra: "curl jq netcat"
 
 docker_external_apt_repo: false
 docker_apt_sources_file: "/etc/apt/sources.list.d/docker-ce.list"

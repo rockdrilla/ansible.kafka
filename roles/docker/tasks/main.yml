@@ -109,21 +109,21 @@
   # try to avoid changes in system
   become_user: nobody
   ansible.builtin.apt:
-    name: "{{ docker_packages }}"
+    name: "{{ docker_packages.split(' ') | select() | list }}"
   vars:
     ansible_remote_tmp: "/tmp"
 
 - name: "APT: Docker package(s)"
   tags: [ install, update ]
   ansible.builtin.apt:
-    name: "{{ docker_packages }}"
+    name: "{{ docker_packages.split(' ') | select()| list }}"
     state: "{% if ('update' in ansible_run_tags) %}latest{% else %}present{% endif %}"
 
 - name: "APT: install extra packages (if any)"
   tags: [ install, update ]
   when: docker_packages_extra | string
   ansible.builtin.apt:
-    name: "{{ docker_packages_extra }}"
+    name: "{{ docker_packages_extra.split(' ') | select()| list }}"
 
 - name: "APT: cleanup"
   tags: [ install, update ]
