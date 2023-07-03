@@ -9,6 +9,9 @@ zk_observer: false
 
 zk_use_ids: false
 
+# set to 0 to disable (excessive) checks
+zk_server_id_first: 1
+
 zk_4lw_allowed: "srvr,mntr"
 
 zk_client_port: 2181

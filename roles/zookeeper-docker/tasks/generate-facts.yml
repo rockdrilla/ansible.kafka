@@ -18,6 +18,19 @@
     zk_election_port: "{{ hostvars[inventory_hostname]['zk_election_port'] | default(zk_election_port) }}"
     zk_client_port: "{{ hostvars[inventory_hostname]['zk_client_port'] | default(zk_client_port) }}"
 
+- tags: [ always ]
+  when: (zk_server_id_first | int) > 0
+  block:
+
+    - name: "ZooKeeper: verify zk_server_id against zk_observer"
+      delegate_to: localhost
+      run_once: true
+      changed_when: false
+      loop: "{{ ansible_play_batch }}"
+      when: ((hostvars[item]['zk_server_id'] | int) == zk_server_id_first) and (hostvars[item]['zk_observer'] | bool)
+      ansible.builtin.fail:
+        msg: "{{ item }} is 'first' zookeeper server but it's observer node"
+
 - name: "fact: zk_server_sfx"
   tags: [ always ]
   changed_when: false

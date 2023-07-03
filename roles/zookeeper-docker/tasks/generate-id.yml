@@ -40,21 +40,21 @@
   ansible.builtin.fail:
     msg: "{{ item }} and {{ inventory_hostname }} are sharing same server id ({{ zk_server_id }})"
 
-- name: "ZooKeeper: determine minimal server id"
-  tags: [ always ]
-  delegate_to: localhost
-  run_once: true
-  changed_when: false
-  ansible.builtin.set_fact:
-    zk_server_id_lo: "{{ ansible_play_batch | map('extract', hostvars, 'zk_server_id') | list | min }}"
+- tags: [ always ]
+  when: (zk_server_id_first | int) > 0
+  block:
 
-- name: "ZooKeeper: verify minimal server id"
-  tags: [ always ]
-  delegate_to: localhost
-  run_once: true
-  changed_when: false
-  when: (zk_server_id_lo_valid | int) < (zk_server_id_lo | int)
-  ansible.builtin.fail:
-    msg: "minimal server id is greater than {{ zk_server_id_lo_valid }}: {{ zk_server_id_lo }}"
-  vars:
-    zk_server_id_lo_valid: 1
+    - name: "ZooKeeper: determine minimal server id"
+      delegate_to: localhost
+      run_once: true
+      changed_when: false
+      ansible.builtin.set_fact:
+        zk_server_id_lo: "{{ ansible_play_batch | map('extract', hostvars, 'zk_server_id') | list | min }}"
+
+    - name: "ZooKeeper: verify minimal server id"
+      delegate_to: localhost
+      run_once: true
+      changed_when: false
+      when: (zk_server_id_first | int) < (zk_server_id_lo | int)
+      ansible.builtin.fail:
+        msg: "minimal server id is greater than {{ zk_server_id_first }}: {{ zk_server_id_lo }}"
