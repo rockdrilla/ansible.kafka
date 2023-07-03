@@ -1,5 +1,17 @@
 ---
 
+- name: "Docker: early pull images"
+  tags: [ install, update ]
+  throttle: "{{ (docker_compose_up_throttle | int) }}"
+  async: "{{ (docker_compose_timeout | int) }}"
+  poll: 5
+  with_items:
+    - "{{ image_zookeeper }}"
+    - "{{ image_zookeeper_exporter }}"
+    - "{{ image_jmx_exporter }}"
+  ansible.builtin.command:
+    cmd: "docker pull {{ item }}"
+
 - name: "tasks: app-common::prepare-remote"
   tags: [ install, update ]
   ansible.builtin.include_role:
