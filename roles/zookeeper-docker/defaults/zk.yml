@@ -1,8 +1,12 @@
 ---
 
-image_jmx_exporter: "{{ image_registry_docker }}/bitnami/jmx-exporter:0.18.0-debian-11-r34"
-image_zookeeper: "{{ image_registry_docker }}/bitnami/zookeeper:3.8.1-debian-11-r49"
-image_zookeeper_exporter: "{{ image_registry_docker }}/dabealu/zookeeper-exporter:v0.1.13"
+image_tag_zookeeper: "3.8.1-debian-11-r50"
+image_tag_zookeeper_exporter: "v0.1.13"
+image_tag_jmx_exporter: "0.19.0-debian-11-r0"
+
+image_zookeeper: "{{ image_registry_docker }}/bitnami/zookeeper:{{ image_tag_zookeeper }}"
+image_zookeeper_exporter: "{{ image_registry_docker }}/dabealu/zookeeper-exporter:{{ image_tag_zookeeper_exporter }}"
+image_jmx_exporter: "{{ image_registry_docker }}/bitnami/jmx-exporter:{{ image_tag_jmx_exporter }}"
 
 # MUST be set on per-host basis
 zk_observer: false
@@ -27,6 +31,7 @@ zk_admin_port: 8080
 
 # internal variables
 
+# keep in sync with files/docker-compose.d/zookeeper.yml.j2
 zk_myid_path: "{{ app_workdir }}/data/zookeeper/data/myid"
 
 zk_admin_stat_ignore_error: false
