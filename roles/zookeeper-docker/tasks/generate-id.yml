@@ -1,6 +1,6 @@
 ---
 
-- name: "fact: zk_server_id from existing installation"
+- name: "fact: zk_server_id (from existing installation)"
   tags: [ update, status ]
   when: zk_server_id is not defined
   ignore_errors: "{{ 'update' in ansible_run_tags }}"
@@ -9,19 +9,18 @@
     src: "{{ zk_myid_path }}"
   register: ctx_myid
 
-- name: "fact: zk_server_id from existing installation"
+- name: "fact: zk_server_id (from existing installation)"
   tags: [ update, status ]
   when: (ctx_myid is defined) and (ctx_myid.content is defined)
   changed_when: false
   ansible.builtin.set_fact:
-    zk_server_id: "{{ ctx_myid.content | b64decode }}"
+    zk_server_id: "{{ ctx_myid.content | b64decode | trim | int }}"
 
-- name: "fact: zk_server_id from host_idx"
+- name: "fact: zk_server_id (fallback to 'host_idx')"
   tags: [ always ]
-  when: hostvars[inventory_hostname]['zk_server_id'] is not defined
   changed_when: false
   ansible.builtin.set_fact:
-    zk_server_id: "{{ host_idx }}"
+    zk_server_id: "{{ hostvars[inventory_hostname]['zk_server_id'] | default(host_idx) | int }}"
 
 - name: "ZooKeeper: verify server id's"
   tags: [ always ]
@@ -40,3 +39,22 @@
   when: (zk_server_id == hostvars[item]['zk_server_id']) and (inventory_hostname != item)
   ansible.builtin.fail:
     msg: "{{ item }} and {{ inventory_hostname }} are sharing same server id ({{ zk_server_id }})"
+
+- name: "ZooKeeper: determine minimal server id"
+  tags: [ always ]
+  delegate_to: localhost
+  run_once: true
+  changed_when: false
+  ansible.builtin.set_fact:
+    zk_server_id_lo: "{{ ansible_play_batch | map('extract', hostvars, 'zk_server_id') | list | min }}"
+
+- name: "ZooKeeper: verify minimal server id"
+  tags: [ always ]
+  delegate_to: localhost
+  run_once: true
+  changed_when: false
+  when: (zk_server_id_lo_valid | int) < (zk_server_id_lo | int)
+  ansible.builtin.fail:
+    msg: "minimal server id is greater than {{ zk_server_id_lo_valid }}: {{ zk_server_id_lo }}"
+  vars:
+    zk_server_id_lo_valid: 1
