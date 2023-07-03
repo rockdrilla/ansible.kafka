@@ -1,7 +1,7 @@
 
   zookeeper:
     <<: *pod_defaults
-    container_name: "{{ app_name }}-zk"
+    container_name: "{{ app_stem }}-zk"
     image: "{{ image_zookeeper }}"
     environment:
       ZOO_SERVER_ID: "{{ zk_server_id }}"
@@ -20,7 +20,7 @@
 
   zookeeper-exporter:
     <<: *pod_defaults
-    container_name: "{{ app_name }}-zk-exporter"
+    container_name: "{{ app_stem }}-zk-exporter"
     image: "{{ image_zookeeper_exporter }}"
     depends_on:
       - zookeeper
@@ -32,7 +32,7 @@
 
 # zookeeper-jmx-exporter:
 #   <<: *pod_defaults
-#   container_name: "{{ app_name }}-zk-jmx-exporter"
+#   container_name: "{{ app_stem }}-zk-jmx-exporter"
 #   image: "{{ image_jmx_exporter }}"
 #   depends_on:
 #     - zookeeper

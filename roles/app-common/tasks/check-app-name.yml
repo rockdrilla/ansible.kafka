@@ -1,10 +1,10 @@
 ---
 
-- name: "verify fact: app_name"
+- name: "verify fact: app_name_clean"
   tags: [ always ]
   delegate_to: localhost
   run_once: true
   changed_when: false
-  when: (app_name is not defined) or ((app_name | string) == "")
+  when: (app_name_clean | string) == ""
   ansible.builtin.fail:
-    msg: "app_name is empty"
+    msg: "app_name_clean is empty"

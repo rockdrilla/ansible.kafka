@@ -1,11 +1,13 @@
 ---
 
 app_name:
+app_name_clean: "{{ app_name | regex_replace('(^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$)', '') | regex_replace('([_.-])+', '\\1') }}"
+app_stem: "{{ app_name_clean | regex_replace('[^a-zA-Z0-9_-]+', '-') | regex_replace('-+', '-') }}"
 app_rootdir: "/data"
-app_workdir: "{{ app_rootdir }}/{{ app_name }}"
+app_workdir: "{{ app_rootdir }}/{{ app_name_clean }}"
 
 # for Ansible host
-playbook_tmpdir: "{{ playbook_dir }}/tmp.{{ app_name }}"
+playbook_tmpdir: "{{ playbook_dir }}/tmp.{{ app_name_clean }}"
 
 app_uid: "10001"
 app_gid: "10001"
