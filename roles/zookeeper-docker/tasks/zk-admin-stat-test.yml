@@ -1,0 +1,52 @@
+---
+
+- name: "Ansible: wait up to {{ docker_compose_timeout | int }} second(s) for ZooKeeper admin server to bring up (at {{ zk_admin_port | int }}:http)"
+  tags: [ always ]
+  async: "{{ (docker_compose_timeout | int) }}"
+  poll: 5
+  ansible.builtin.wait_for:
+    port: "{{ zk_admin_port | int }}"
+    delay: 10
+    timeout: "{{ (docker_compose_timeout | int) }}"
+
+- name: "ZooKeeper: query instance via admin server"
+  tags: [ always ]
+  changed_when: false
+  ansible.builtin.uri:
+    url: "http://localhost:{{ zk_admin_port }}/commands/stat"
+    force: true
+    use_netrc: false
+    use_proxy: false
+    return_content: true
+  register: ctx_zk_admin_stat
+  until: ctx_zk_admin_stat.status == 200
+  delay: 5
+  retries: "{{ ((docker_compose_timeout | int) / 5) | int }}"
+
+- name: "ZooKeeper: process response"
+  tags: [ always ]
+  changed_when: false
+  ansible.builtin.set_fact:
+    zk_admin_stat: "{{ ctx_zk_admin_stat.content | from_json }}"
+
+- name: "ZooKeeper: verify response"
+  changed_when: false
+  when: zk_admin_stat.error is not defined
+  ansible.builtin.fail:
+    msg: "admin server response does not contain required field: 'error'"
+
+- tags: [ always ]
+  when: (zk_admin_stat.error is defined) and (zk_admin_stat.error != None)
+  block:
+
+    - name: "ZooKeeper: print reported error (debug)"
+      when: zk_admin_stat_ignore_error | bool
+      changed_when: false
+      ansible.builtin.debug:
+        msg: "ZooKeeper admin server error: {{ zk_admin_stat.error }}"
+
+    - name: "ZooKeeper: verify response"
+      changed_when: false
+      when: not (zk_admin_stat_ignore_error | bool)
+      ansible.builtin.fail:
+        msg: "admin server error: {{ zk_admin_stat.error }}"

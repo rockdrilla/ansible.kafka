@@ -28,3 +28,5 @@ zk_admin_port: 8080
 # internal variables
 
 zk_myid_path: "{{ app_workdir }}/data/zookeeper/data/myid"
+
+zk_admin_stat_ignore_error: false

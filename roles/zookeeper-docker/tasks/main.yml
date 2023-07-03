@@ -36,11 +36,8 @@
 - ansible.builtin.import_tasks:
     file: docker-compose-run.yml
 
-- name: "tasks: app-common::docker-compose-verify"
-  tags: [ always ]
-  ansible.builtin.include_role:
-    name: app-common
-    tasks_from: docker-compose-verify
+- ansible.builtin.import_tasks:
+    file: docker-compose-verify.yml
 
 - name: "output ZooKeeper connect string"
   tags: [ always ]
