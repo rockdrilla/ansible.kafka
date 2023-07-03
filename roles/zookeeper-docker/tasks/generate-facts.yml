@@ -9,7 +9,7 @@
 - ansible.builtin.import_tasks:
     file: generate-id.yml
 
-- name: "fact: zk_observer, zk_follower_port, zk_election_port, zk_client_port"
+- name: "fact: zk_observer, zk_*_port"
   tags: [ always ]
   changed_when: false
   ansible.builtin.set_fact:
@@ -17,6 +17,7 @@
     zk_follower_port: "{{ hostvars[inventory_hostname]['zk_follower_port'] | default(zk_follower_port) }}"
     zk_election_port: "{{ hostvars[inventory_hostname]['zk_election_port'] | default(zk_election_port) }}"
     zk_client_port: "{{ hostvars[inventory_hostname]['zk_client_port'] | default(zk_client_port) }}"
+    zk_admin_port: "{{ hostvars[inventory_hostname]['zk_admin_port'] | default(zk_admin_port) }}"
 
 - tags: [ always ]
   when: (zk_sane_first_server_id | int) > 0
