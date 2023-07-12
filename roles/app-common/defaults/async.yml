@@ -1,0 +1,5 @@
+---
+
+async_timeout: 180
+async_poll: 10
+async_throttle: "{{ ((ansible_play_batch | count) / 3) + 1 }}"

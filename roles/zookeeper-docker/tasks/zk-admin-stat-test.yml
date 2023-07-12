@@ -1,13 +1,13 @@
 ---
 
-- name: "Ansible: wait up to {{ docker_compose_timeout | int }} second(s) for ZooKeeper admin server to bring up (at {{ zk_admin_port | int }}:http)"
+- name: "Ansible: wait up to {{ async_timeout | int }} second(s) for ZooKeeper admin server to bring up"
   tags: [ always ]
-  async: "{{ (docker_compose_timeout | int) }}"
-  poll: 5
+  async: "{{ (async_timeout | int) }}"
+  poll: "{{ (async_poll | int) }}"
   ansible.builtin.wait_for:
     port: "{{ zk_admin_port | int }}"
-    delay: 10
-    timeout: "{{ (docker_compose_timeout | int) }}"
+    delay: "{{ (async_poll | int) }}"
+    timeout: "{{ (async_timeout | int) }}"
 
 - name: "ZooKeeper: query instance via admin server"
   tags: [ always ]
@@ -20,8 +20,8 @@
     return_content: true
   register: ctx_zk_admin_stat
   until: ctx_zk_admin_stat.status == 200
-  delay: 5
-  retries: "{{ ((docker_compose_timeout | int) / 5) | int }}"
+  delay: "{{ (async_poll | int) }}"
+  retries: "{{ ((async_timeout | int) / (async_poll | int)) | int }}"
 
 - name: "ZooKeeper: process response"
   tags: [ always ]

@@ -1,5 +1,13 @@
 ---
 
+- name: "defaults: extra-ca"
+  tags: [ always ]
+  ansible.builtin.include_role:
+    name: certificates
+    public: true
+    defaults_from: extra-ca
+    tasks_from: _none_
+
 - name: "tasks: app-common::check-tags"
   tags: [ always ]
   ansible.builtin.include_role:

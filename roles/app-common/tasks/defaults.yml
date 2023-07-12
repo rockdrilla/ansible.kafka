@@ -1,0 +1,21 @@
+---
+
+- tags: [ always ]
+  with_items:
+    - "certificates"
+    - "docker"
+    - "docker-compose"
+  ansible.builtin.include_role:
+    name: "{{ item }}"
+    public: true
+    tasks_from: _none_
+
+- tags: [ always ]
+  with_items:
+    - "app"
+    - "async"
+    - "docker"
+  ansible.builtin.include_role:
+    name: app-common
+    public: true
+    defaults_from: "{{ item }}"

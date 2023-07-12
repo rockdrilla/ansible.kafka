@@ -2,9 +2,10 @@
 
 - name: "Docker: early pull images"
   tags: [ install, update ]
-  throttle: "{{ (docker_compose_up_throttle | int) }}"
-  async: "{{ (docker_compose_timeout | int) }}"
-  poll: 5
+  throttle: "{{ (async_throttle | int) }}"
+  async: "{{ (async_timeout | int) }}"
+  poll: "{{ (async_poll | int) }}"
+  retries: 2
   with_items:
     - "{{ image_zookeeper }}"
     - "{{ image_zookeeper_exporter }}"
