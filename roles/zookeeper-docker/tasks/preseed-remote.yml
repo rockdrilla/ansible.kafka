@@ -9,8 +9,16 @@
 
 - name: "Docker: preseed default ZooKeeper configuration"
   tags: [ install, update ]
-  ansible.builtin.command:
-    argv: [ "docker", "run", "--rm", "--entrypoint=", "-u", "0:0", "-v", "{{ app_workdir }}/conf/zookeeper:/out", "-w", "/opt/bitnami/zookeeper/conf", "{{ image_zookeeper }}", "sh", "-c", "cp -nt /out ./* ; exit 0" ]
+  ansible.builtin.include_role:
+    name: docker
+    tasks_from: cmd-run
+  vars:
+    image: "{{ image_zookeeper }}"
+    bare: true
+    workdir: "/opt/bitnami/zookeeper/conf"
+    volumes:
+      - "{{ app_workdir }}/conf/zookeeper:/out"
+    cmd: [ "sh", "-c", "cp -nt /out ./* ; exit 0" ]
 
 - name: "ZooKeeper: adjust filesystem"
   tags: [ install, update ]
