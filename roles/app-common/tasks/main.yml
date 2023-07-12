@@ -1,5 +1,0 @@
----
-
-- tags: [ always ]
-  changed_when: false
-  ansible.builtin.gather_facts:

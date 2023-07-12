@@ -6,7 +6,6 @@
     name: app-common
     public: true
     defaults_from: app
-    tasks_from: _none_
 
 - name: "defaults: docker-compose::main"
   tags: [ always ]
@@ -22,7 +21,6 @@
     name: app-common
     public: true
     defaults_from: docker
-    tasks_from: _none_
 
 - name: "defaults: zk"
   tags: [ always ]

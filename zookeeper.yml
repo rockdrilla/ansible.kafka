@@ -6,7 +6,6 @@
   vars:
 
   roles:
-    - app-common
     - certificates
     - docker
     - docker-compose
