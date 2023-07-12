@@ -1,0 +1,32 @@
+---
+
+- tags: [ always ]
+  block:
+
+    - when: (image is not defined) or (image is not string) or ((image | trim) == '')
+      changed_when: false
+      ansible.builtin.fail:
+        msg: "'image' is invalid: {{ ' '.join([ (image | type_debug), [ (image | default(None)) ] | reject('equalto', None) ] | flatten | map('string') | map('quote')) }}"
+
+    - when: (cmd is not defined) or (cmd is not iterable) or (cmd is mapping)
+      changed_when: false
+      ansible.builtin.fail:
+       msg: "'cmd' is invalid: {{ ' '.join([ (cmd | type_debug), [ (cmd | default(None)) ] | reject('equalto', None) ] | flatten | map('string') | map('quote')) }}"
+
+    - when: (name_as is defined)
+      block:
+
+        - changed_when: false
+          when: (name_as is not string) or ((name_as | regex_findall('^[a-zA-Z0-9_-]+$') | count) == 0)
+          ansible.builtin.fail:
+            msg: "'name_as' is invalid: {{ ' '.join([ (name_as | type_debug), [ (name_as | default(None)) ] | reject('equalto', None) ] | flatten | map('string') | map('quote')) }}"
+
+    - name: "Docker: run {{ image }} {{ [ cmd ] | flatten | map('string') | map('quote') }}"
+      ansible.builtin.command:
+        argv: "{{ [ _argv, _bare, _name, _workdir, _volumes, image, cmd ] | reject('equalto', None) | flatten }}"
+      vars:
+        _argv: [ 'docker', 'run' ]
+        _name: "{{ ((name_as is defined) and (name_as is string) and (name_as != '')) | ternary('--name=' + (name_as | default('', true)), []) }}"
+        _bare: "{{ ((bare is defined) and (bare | default(false, true) | bool)) | ternary([ '--rm', '--entrypoint=', '-u', '0:0' ], []) }}"
+        _volumes: "{{ [ '-v' ] | product(((volumes is defined) and (volumes is iterable) and (volumes is not mapping)) | ternary([ (volumes | default([], true)) ] | flatten, [])) | flatten }}"
+        _workdir: "{{ ((workdir is defined) and (workdir is string) and (workdir != '')) | ternary([ '-w', (workdir | default('', true)) ], []) }}"
