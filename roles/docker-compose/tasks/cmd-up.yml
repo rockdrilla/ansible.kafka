@@ -1,0 +1,9 @@
+---
+
+- name: "Docker Compose: up"
+  tags: [ always ]
+  ansible.builtin.include_role:
+    name: docker-compose
+    tasks_from: cmd-base
+  vars:
+    _argv: [ 'up', '--detach' ]

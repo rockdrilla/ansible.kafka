@@ -1,11 +1,9 @@
 ---
 
-- name: "Docker Compose: run (with parallel={{ docker_compose_up_throttle | int }})"
+- name: "Docker Compose: run (with parallel={{ async_throttle | int }})"
   tags: [ install, update ]
-  when: (app_host_selector is not defined) and (app_group_selector is not defined)
-  throttle: "{{ docker_compose_up_throttle | int }}"
-  async: "{{ (docker_compose_timeout | int) }}"
-  poll: 15
-  ansible.builtin.command:
+  ansible.builtin.include_role:
+    name: docker-compose
+    tasks_from: cmd-up
+  vars:
     chdir: "{{ app_workdir }}"
-    cmd: "{{ docker_compose_cmd_up }}"

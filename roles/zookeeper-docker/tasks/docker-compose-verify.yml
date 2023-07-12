@@ -1,11 +1,5 @@
 ---
 
-- name: "tasks: app-common::docker-compose-verify"
-  tags: [ always ]
-  ansible.builtin.include_role:
-    name: app-common
-    tasks_from: docker-compose-verify
-
 - name: "tasks: zk-admin-stat-test"
   tags: [ always ]
   ansible.builtin.include_role:

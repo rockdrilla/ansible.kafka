@@ -2,13 +2,11 @@
 
 - name: "Docker Compose: stop previous installation"
   tags: [ update ]
-  ignore_errors: true
-  throttle: "{{ (docker_compose_down_throttle | int) }}"
-  async: "{{ (docker_compose_timeout | int) }}"
-  poll: 5
-  ansible.builtin.command:
+  ansible.builtin.include_role:
+    name: docker-compose
+    tasks_from: cmd-down
+  vars:
     chdir: "{{ app_workdir }}"
-    cmd: "{{ docker_compose_cmd_down }}"
 
 - name: "Docker Compose: create manifest"
   tags: [ install, update ]
@@ -21,9 +19,9 @@
 
 - name: "Docker Compose: prepare"
   tags: [ install, update ]
-  throttle: "{{ (docker_compose_up_throttle | int) }}"
-  async: "{{ (docker_compose_timeout | int) }}"
-  poll: 10
-  ansible.builtin.command:
+  ansible.builtin.include_role:
+    name: docker-compose
+    tasks_from: cmd-up
+  vars:
     chdir: "{{ app_workdir }}"
-    cmd: "{{ docker_compose_cmd_up }} --no-start"
+    argv: [ "--no-start" ]

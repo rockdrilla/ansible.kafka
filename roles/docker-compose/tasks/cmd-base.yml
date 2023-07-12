@@ -1,0 +1,18 @@
+---
+
+- tags: [ always ]
+  ansible.builtin.include_role:
+    name: app-common
+    public: true
+    defaults_from: async
+
+- tags: [ always ]
+  throttle: "{{ (async_throttle | int) }}"
+  async: "{{ (async_timeout | int) }}"
+  poll: "{{ (async_poll | int) }}"
+  ansible.builtin.command:
+    argv: "{{ [ docker_compose_binary, _argv, _timeout, _argv_extra ] | reject('equalto', None) | flatten }}"
+    chdir: "{{ chdir }}"
+  vars:
+    _timeout: "{{ [ '--timeout', (async_timeout | string) ] }}"
+    _argv_extra: "{{ ((argv is defined) and (argv is iterable) and (argv is not mapping)) | ternary([ (argv | default([], true)) ] | flatten, []) | flatten }}"
