@@ -12,6 +12,11 @@ playbook_tmpdir: "{{ playbook_dir }}/tmp.{{ app_name_clean }}"
 app_uid: "10001"
 app_gid: "10001"
 
+app_tls_auto: true
+app_tls_force: false
+app_tls_srcdir: "{{ playbook_dir }}/files/tls"
+app_tls_dstdir: "{{ app_workdir }}/tls"
+
 # "inventory" = use "ansible_host" from inventory (default)
 # "fqdn"      = use "ansible_fqdn" from host
 # "ipv4"      = use default/first IPv4 address from host

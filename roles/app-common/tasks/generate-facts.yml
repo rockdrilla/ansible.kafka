@@ -49,3 +49,65 @@
   when: (host_addr is not defined) or ((host_addr | string) == "")
   ansible.builtin.fail:
     msg: "host_addr is empty"
+
+- name: "fact: app_has_tls"
+  tags: [ install, update ]
+  delegate_to: localhost
+  run_once: true
+  changed_when: false
+  ansible.builtin.set_fact:
+    app_has_tls: false
+
+- tags: [ install, update ]
+  when: (app_tls_force | bool) or (app_tls_auto | bool)
+  block:
+
+    - name: "facts: host_tls_*_file"
+      changed_when: false
+      ansible.builtin.set_fact:
+        host_tls_key_file: "{{ host_tls_key_file | default(app_tls_srcdir + '/' + inventory_hostname + '.pem') }}"
+        host_tls_crt_file: "{{ host_tls_crt_file | default(app_tls_srcdir + '/' + inventory_hostname + '.crt') }}"
+
+    - name: "fact: host_tls_files"
+      changed_when: false
+      ansible.builtin.set_fact:
+        host_tls_files: "{{ [ host_tls_key_file , host_tls_crt_file ] }}"
+
+    - name: "fact: host_tls_missing_files"
+      changed_when: false
+      ansible.builtin.set_fact:
+        host_tls_missing_files: "{{ host_tls_files | difference((host_tls_files[0] | fileglob) + (host_tls_files[1] | fileglob)) }}"
+
+    - name: "fact: host_has_tls"
+      changed_when: false
+      ansible.builtin.set_fact:
+        host_has_tls: "{{ (host_tls_missing_files | count) == 0 }}"
+
+    - when: not (host_has_tls | bool)
+      block:
+
+      - name: "fact: verify host_has_tls against app_tls_force"
+        changed_when: false
+        when: (app_tls_force | bool)
+        ansible.builtin.fail:
+          msg: "missing required files for TLS: {{ ' '.join(host_tls_missing_files) }}"
+
+      - name: "fact: verify host_has_tls"
+        changed_when: false
+        when: not (app_tls_force | bool)
+        ansible.builtin.debug:
+          msg: "missing required files for TLS: {{ ' '.join(host_tls_missing_files) }}"
+
+    - name: "fact: hosts_tls_presense"
+      delegate_to: localhost
+      run_once: true
+      changed_when: false
+      ansible.builtin.set_fact:
+        hosts_tls_presense: "{{ ansible_play_batch | map('extract', hostvars, 'host_has_tls') | list | unique }}"
+
+    - name: "fact: adjust app_has_tls"
+      delegate_to: localhost
+      run_once: true
+      changed_when: false
+      ansible.builtin.set_fact:
+        app_has_tls: "{{ ((hosts_tls_presense | count) == 1) and (hosts_tls_presense[0]) }}"

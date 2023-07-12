@@ -12,3 +12,26 @@
     owner: root
     group: root
     mode: "0755"
+
+- tags: [ install, update ]
+  when: (app_has_tls | bool)
+  block:
+
+    - name: "app: tls: create directories"
+      with_items:
+        - "{{ app_tls_dstdir }}"
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0750"
+
+    - name: "app: tls: preseed files"
+      with_items: "{{ host_tls_files }}"
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: "{{ app_tls_dstdir }}/host{{ (item | splitext)[1] }}"
+        owner: "{{ app_uid }}"
+        group: "{{ app_gid }}"
+        mode: "0440"
